@@ -16,6 +16,7 @@ export async function GET() {
     // 🔄 Formatear la respuesta para combinar nombres
     const gestoresFormateados = gestores.map((gestor) => ({
       id: gestor.usuario_id, // ID del usuario
+      persona_id: gestor.persona ? gestor.persona.persona_id : null, // 🔹 Incluir el ID de la persona si existe
       username: gestor.username, // Nombre de usuario
       rol: gestor.rol_id, // ID del rol
       activo: gestor.activo, // Estado del usuario

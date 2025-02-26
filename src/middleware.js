@@ -5,7 +5,7 @@ export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   // 🔹 Definir rutas protegidas
-  const protectedRoutes = ["/dashboard", "/settings"];
+  const protectedRoutes = ["/dashboard", "/settings","/clientes"];
 
   // 🔹 Redirigir al login si no hay token y la ruta es protegida
   if (!token && protectedRoutes.some((path) => req.nextUrl.pathname.startsWith(path))) {

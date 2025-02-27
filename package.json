@@ -24,6 +24,7 @@
     "@prisma/client": "^6.4.1",
     "add": "^2.0.6",
     "axios": "^1.7.9",
+    "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "date-fns": "2.29.3",
     "dayjs": "^1.11.13",

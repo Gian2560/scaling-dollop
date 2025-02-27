@@ -75,19 +75,29 @@ export default function UsuariosPage() {
 
   const handleDelete = async (id) => {
     if (!confirm("¿Estás seguro de eliminar este usuario?")) return;
+  
     try {
       const res = await fetch(`/api/usuarios/${id}`, {
         method: "DELETE",
         headers: {
-          "x-user-role": localStorage.getItem("userRole") || "Usuario",
+          "Content-Type": "application/json",
         },
       });
-      
-      if (res.ok) setUsuarios((prev) => prev.filter((usuario) => usuario.usuario_id !== id));
+  
+      if (res.ok) {
+        setUsuarios((prev) => prev.filter((usuario) => usuario.usuario_id !== id));
+      } else {
+        const errorData = await res.json();
+        console.error("❌ Error al eliminar usuario:", errorData.error);
+        alert(errorData.error);
+      }
     } catch (error) {
       console.error("❌ Error en la eliminación:", error);
     }
   };
+  
+  
+  
   
 
   const columns = [
@@ -136,7 +146,7 @@ export default function UsuariosPage() {
           <IconButton onClick={() => handleOpenModal(params.row)} color="primary">
             <EditIcon />
           </IconButton>
-          <IconButton onClick={() => handleDelete(params.row.id)} color="error">
+          <IconButton onClick={() => handleDelete(params.row.usuario_id)} color="error">
             <DeleteIcon />
           </IconButton>
         </>

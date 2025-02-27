@@ -57,9 +57,18 @@ export async function PUT(req,context) {
   
   
 
-  export async function DELETE(req, { params }) {
+
+  export async function DELETE(req, context) {
     try {
-      const { id } = params;
+      // Esperar los parámetros correctamente
+      const { params } = await context;
+      const id = params?.id;
+  
+      if (!id || isNaN(id)) {
+        return NextResponse.json({ error: "ID de usuario no válido" }, { status: 400 });
+      }
+  
+      console.log("🔹 ID a eliminar:", id);
   
       // Buscar usuario con persona asociada
       const usuarioExistente = await prisma.usuario.findUnique({
@@ -71,18 +80,19 @@ export async function PUT(req,context) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
       }
   
-      // Primero eliminamos la persona, luego el usuario
+      // Eliminar primero la persona asociada (si existe)
       if (usuarioExistente.persona) {
         await prisma.persona.delete({
           where: { persona_id: usuarioExistente.persona.persona_id },
         });
       }
   
+      // Luego eliminamos el usuario
       await prisma.usuario.delete({
         where: { usuario_id: parseInt(id) },
       });
   
-      return NextResponse.json({ message: "Usuario eliminado correctamente" });
+      return NextResponse.json({ message: "✅ Usuario eliminado correctamente" });
     } catch (error) {
       console.error("❌ Error eliminando usuario:", error);
       return NextResponse.json({ error: "Error eliminando usuario" }, { status: 500 });

@@ -3,8 +3,9 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
 
-export async function PUT(req, { params }) {
+export async function PUT(req,context) {
     try {
+      const  params = await context.params;
       const { id } = params;
       const { username, password, rol_id, activo, nombre, primer_apellido, segundo_apellido, celular } = await req.json();
   
@@ -23,18 +24,9 @@ export async function PUT(req, { params }) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
       }
   
-      let hashedPassword = usuarioExistente.password;
+    const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Solo los administradores pueden cambiar la contraseña
-      if (password && userRole === "Administrador") {
-        console.log("🔑 Cambiando contraseña...");
-        hashedPassword = await bcrypt.hash(password, 10);
-      } else if (password) {
-        return NextResponse.json(
-          { error: "No tienes permisos para cambiar la contraseña" },
-          { status: 403 }
-        );
-      }
+      
   
       // Actualizar usuario y persona asociada
       const updatedUsuario = await prisma.usuario.update({

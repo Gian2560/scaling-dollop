@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
-//import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 export const authOptions = {
   providers: [
@@ -24,8 +24,8 @@ export const authOptions = {
           if (!usuario) throw new Error("Usuario no encontrado.");
 
           // 🔑 Validar contraseña (Si aún no está encriptada, usa comparación simple)
-          //const esPasswordCorrecto = await bcrypt.compare(credentials.password, usuario.password);
-          const esPasswordCorrecto = credentials.password === usuario.password;
+          const esPasswordCorrecto = await bcrypt.compare(credentials.password, usuario.password);
+          //const esPasswordCorrecto = credentials.password === usuario.password;
 
           if (!esPasswordCorrecto) throw new Error("Contraseña incorrecta.");
 

@@ -13,7 +13,6 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const userRole = localStorage.getItem("userRole"); // O úsalo desde un contexto global
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -29,7 +28,7 @@ export default function UsuariosPage() {
       }
     };
     fetchUsuarios();
-  }, []);
+  }, [loading]);
 
   const handleOpenModal = (user = null) => {
     setEditingUser(user);
@@ -44,28 +43,34 @@ export default function UsuariosPage() {
   const handleSave = async (userData) => {
     const method = editingUser ? "PUT" : "POST";
     const url = editingUser ? `/api/usuarios/${editingUser.usuario_id}` : "/api/usuarios";
-  
+    
     try {
       const res = await fetch(url, {
         method,
         headers: { 
           "Content-Type": "application/json",
-          "x-user-role": localStorage.getItem("userRole") || "Usuario", // Enviar el rol actual
+          "x-user-role": "Usuario",
         },
         body: JSON.stringify(userData),
       });
   
-      if (!res.ok) throw new Error("Error en la operación");
+      const newUser = await res.json(); // Obtener el usuario con el ID generado
+  
+      if (!res.ok) throw new Error(newUser.error || "Error en la operación");
   
       setOpenModal(false);
       setEditingUser(null);
+  
       setUsuarios((prev) =>
-        editingUser ? prev.map((u) => (u.usuario_id === userData.usuario_id ? userData : u)) : [...prev, userData]
+        editingUser
+          ? prev.map((u) => (u.usuario_id === newUser.usuario_id ? newUser : u)) // Actualizar usuario editado
+          : [...prev, newUser] // Agregar usuario nuevo con ID asignado
       );
     } catch (error) {
       console.error("❌ Error al guardar usuario:", error);
     }
   };
+  
   
 
   const handleDelete = async (id) => {
@@ -118,7 +123,7 @@ export default function UsuariosPage() {
         headerName: "Rol",
         flex: 1,
         minWidth: 120,
-        renderCell: (params) => params.row?.rol?.celular || "No disponible"
+        renderCell: (params) => params.row?.rol?.nombre_rol || "No disponible"
       },
     { field: "activo", headerName: "Estado", flex: 1, minWidth: 100 },
     {
@@ -190,7 +195,7 @@ function UsuarioModal({ open, onClose, onSave, user, userRole }) {
           <TextField name="username" label="Usuario" value={formData.username} onChange={handleChange} fullWidth margin="dense" required />
   
           {/* Solo los Administradores pueden cambiar la contraseña */}
-          {userRole === "Administrador" && (
+          {(
             <TextField name="password" label="Nueva Contraseña" type="password" value={formData.password} onChange={handleChange} fullWidth margin="dense" />
           )}
   

@@ -188,6 +188,20 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Campañas" />
         </ListItem>
+        <ListItem
+          button="true"
+          onClick={() => router.push("/usuarios")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <PeopleIcon />
+          </ListItemIcon>
+          <ListItemText primary="Usuarios" />
+        </ListItem>
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>

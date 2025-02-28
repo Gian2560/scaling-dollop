@@ -18,7 +18,7 @@ export default function ClienteDetallePage() {
   } = useClienteDetalle(id);
 
   const [tab, setTab] = useState(0);
-
+  console.log("El cliente es",cliente);
   if (loading) return <Typography sx={{ color: "black" }}>Cargando cliente...</Typography>;
   if (!cliente) return <Typography sx={{ color: "black" }}>No se encontró el cliente.</Typography>;
 
@@ -26,14 +26,12 @@ export default function ClienteDetallePage() {
     <Box p={4}>
       {/* Encabezado con el nombre del cliente */}
       <Typography variant="h4" sx={{ color: "black" }}>{cliente.nombre}</Typography>
-      <Typography variant="subtitle1" sx={{ color: "black" }}>Teléfono: {cliente.telefono}</Typography>
+      <Typography variant="subtitle1" sx={{ color: "black" }}>Teléfono: {cliente.celular}</Typography>
 
-      {/* Pestañas de navegación */}
+      {/* Pestañas de navegación          <Tab label="Promesas de Pago" sx={{ color: "black" }} />*/}
       <Tabs value={tab} onChange={(_, newValue) => setTab(newValue)}>
         <Tab label="Información General" sx={{ color: "black" }} />
         <Tab label="Conversaciones" sx={{ color: "black" }} onClick={loadConversacion} />
-        <Tab label="Citas" sx={{ color: "black" }} />
-        <Tab label="Pagos" sx={{ color: "black" }} />
       </Tabs>
 
       {/* Contenido de cada pestaña */}
@@ -41,11 +39,8 @@ export default function ClienteDetallePage() {
         <Box mt={3}>
           <Typography variant="h6" sx={{ color: "black" }}>Información General</Typography>
           <Divider sx={{ my: 1, backgroundColor: "black" }} />
-          <Typography sx={{ color: "black" }}><strong>Documento de Identidad:</strong> {cliente.documento || "No registrado"}</Typography>
-          <Typography sx={{ color: "black" }}><strong>Última Interacción:</strong> {cliente.ultima_interaccion || "No disponible"}</Typography>
+          <Typography sx={{ color: "black" }}><strong>Documento de Identidad:</strong> {cliente.documento_identidad || "No registrado"}</Typography>
           <Typography sx={{ color: "black" }}><strong>Última Interacción con el Bot:</strong> {cliente.ultima_interaccion_bot || "No disponible"}</Typography>
-          <Typography sx={{ color: "black" }}><strong>Tipo de Cliente:</strong> {cliente.tipo_cliente || "No especificado"}</Typography>
-          <Typography sx={{ color: "black" }}><strong>Categoría No Interés:</strong> {cliente.categoria_no_interes || "N/A"}</Typography>
           <Typography sx={{ color: "black" }}><strong>Observaciones:</strong> {cliente.observaciones || "Sin observaciones"}</Typography>
         </Box>
       )}

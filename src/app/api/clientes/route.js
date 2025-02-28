@@ -55,6 +55,7 @@ export async function GET(req) {
       orderBy: { [orderBy]: order },
       take: pageSize,
       skip: (page - 1) * pageSize,
+      
     });
 
     console.log("✅ Clientes obtenidos:", clientes.length);

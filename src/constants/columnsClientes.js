@@ -4,36 +4,37 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
 import ActionButton from "@/app/components/ActionButton";
 // 🔹 Función para estilizar etiquetas de estado
+// 🔹 Función para estilizar etiquetas de estado
 const getEstadoStyle = (estado) => {
   const styles = {
-    "Interesado": { 
+    "INTERESADO": { 
       color: "rgba(255, 152, 0, 0.9)", // Naranja intenso
       backgroundColor: "rgba(255, 235, 59, 0.3)", // Amarillo claro
       fontWeight: "normal" 
     },
-    "En seguimiento": { 
+    "EN SEGUIMIENTO": { 
       color: "rgba(33, 150, 243, 0.9)", // Azul intenso
       backgroundColor: "rgba(33, 150, 243, 0.3)", // Azul claro
       fontWeight: "normal" 
     },
-    "No interesado": { 
+    "NO INTERESADO": { 
       color: "rgba(244, 67, 54, 0.9)", // Rojo intenso
       backgroundColor: "rgba(244, 67, 54, 0.3)", // Rojo claro
       fontWeight: "normal" 
     },
-    "Promesa de Pago": { 
+    "PROMESA DE PAGO": { 
       color: "rgba(255, 152, 0, 0.9)", // Naranja intenso
       backgroundColor: "rgba(255, 152, 0, 0.3)", // Naranja claro
       fontWeight: "normal" 
     },
-    "Finalizado": { 
+    "FINALIZADO": { 
       color: "rgba(76, 175, 80, 0.9)", // Verde intenso
       backgroundColor: "rgba(76, 175, 80, 0.3)", // Verde claro
       fontWeight: "normal" 
     },
   };
 
-  return styles[estado] || { 
+  return styles[estado.toUpperCase()] || { 
     color: "rgba(224, 224, 224, 0.9)", // Gris intenso
     backgroundColor: "rgba(224, 224, 224, 0.3)", // Gris claro
     fontWeight: "normal" 
@@ -42,39 +43,40 @@ const getEstadoStyle = (estado) => {
 
 const getMotivoStyle = (motivo) => {
   const styles = {
-    "Mala información": { 
+    "MALA INFORMACIÓN": { 
       color: "rgba(255, 152, 0, 0.9)", // Naranja intenso
       backgroundColor: "rgba(255, 235, 59, 0.3)", // Amarillo claro
       fontWeight: "normal" 
     },
-    "Administrativo": { 
+    "ADMINISTRATIVO": { 
       color: "rgba(33, 150, 243, 0.9)", // Azul intenso
       backgroundColor: "rgba(33, 150, 243, 0.3)", // Azul claro
       fontWeight: "normal" 
     },
-    "Olvido de pago": { 
+    "OLVIDO DE PAGO": { 
       color: "rgba(244, 67, 54, 0.9)", // Rojo intenso
       backgroundColor: "rgba(244, 67, 54, 0.3)", // Rojo claro
       fontWeight: "normal" 
     },
-    "Desconocido": { 
+    "DESCONOCIDO": { 
       color: "rgba(255, 152, 0, 0.9)", // Naranja intenso
       backgroundColor: "rgba(255, 152, 0, 0.3)", // Naranja claro
       fontWeight: "normal" 
     },
-    "Económico": { 
+    "ECONÓMICO": { 
       color: "rgba(76, 175, 80, 0.9)", // Verde intenso
       backgroundColor: "rgba(76, 175, 80, 0.3)", // Verde claro
       fontWeight: "normal" 
     },
   };
 
-  return styles[motivo] || { 
+  return styles[motivo.toUpperCase()] || { 
     color: "rgba(224, 224, 224, 0.9)", // Gris intenso
     backgroundColor: "rgba(224, 224, 224, 0.3)", // Gris claro
     fontWeight: "normal" 
   };
 };
+
 
   
 

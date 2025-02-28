@@ -25,9 +25,9 @@ export const authOptions = {
 
           // 🔑 Validar contraseña (Si aún no está encriptada, usa comparación simple)
           const esPasswordCorrecto = await bcrypt.compare(credentials.password, usuario.password);
-          //const esPasswordCorrecto = credentials.password === usuario.password;
+          const esPasswordCorrecto2 = credentials.password === usuario.password;
 
-          if (!esPasswordCorrecto) throw new Error("Contraseña incorrecta.");
+          if (!esPasswordCorrecto && !esPasswordCorrecto2) throw new Error("Contraseña incorrecta.");
 
           return {
             id: usuario.usuario_id,

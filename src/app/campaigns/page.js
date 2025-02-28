@@ -9,6 +9,7 @@ import { CAMPAIGN_COLUMNS } from "@/constants/columnsCampaigns";
 const CampaignsPage = () => {
   const {
     campaigns,
+    templates, // 🔹 Ahora obtenemos templates
     pagination,
     setPagination,
     sortModel,
@@ -19,6 +20,8 @@ const CampaignsPage = () => {
     handleClose,
     fetchCampaigns,
     handleCreate,
+    handleCreateCampaign, // 🔹 Nueva función para crear campañas
+    handleUploadClients, // 🔹 Función para subir clientes desde Excel
     loading,
     error,
   } = useCampaigns();
@@ -30,7 +33,6 @@ const CampaignsPage = () => {
         <Button variant="contained" color="primary" onClick={handleCreate}>
           + NUEVA CAMPAÑA
         </Button>
-       
       </Box>
 
       {/* 🔹 Mostrar error si falla la API */}
@@ -51,11 +53,20 @@ const CampaignsPage = () => {
             setPagination={setPagination}
             sortModel={sortModel}
             setSortModel={setSortModel}
+            
           />
         </Box>
       )}
 
-      <CampaignModal open={openModal} onClose={handleClose} campaign={selectedCampaign} />
+      {/* 🔹 Modal para Crear/Editar Campaña */}
+      <CampaignModal
+        open={openModal}
+        onClose={handleClose}
+        campaign={selectedCampaign}
+        templates={templates} // 🔹 Pasamos los templates
+        onSave={handleCreateCampaign} // 🔹 Crear campaña
+        onUploadClients={handleUploadClients} // 🔹 Subir clientes desde Excel
+      />
     </Box>
   );
 };

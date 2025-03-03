@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
+import { Typography, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -155,10 +155,15 @@ export default function UsuariosPage() {
   ];
 
   return (
-    <div style={{ width: "100%", height: "80vh", padding: "20px" }}>
+    <div style={{ width: "100%", height: "80vh", padding: "20px" }}> <Typography variant="h4" gutterBottom sx={{ color: "#1A202C" }}>
+    Usuarios
+  </Typography>
+      
       <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
         Crear Usuario
       </Button>
+      <br></br>
+      <br></br>
       <DataGrid 
   rows={usuarios} 
   columns={columns} 

@@ -1,15 +1,15 @@
-import axiosInstance from "./api";
+import axiosInstance from "./api"; // Asegúrate de que tienes tu configuración de Axios
 
 export const getPromesasPago = async () => {
-  const response = await axiosInstance.get("/promesas_pago");
+  const response = await axiosInstance.get("/promesas_pago"); // Cambiado a la API local
   return response.data.map((promesa) => ({
-    title: `${promesa.cliente.nombre} (${promesa.cliente.celular})`,
-    start: new Date(promesa.fecha),
-    end: new Date(new Date(promesa.fecha).getTime() + 30 * 60 * 1000),
-    backgroundColor: promesa.estado === "pendiente" ? "#FFC107" : "#4CAF50",
+    title: `${promesa.title}`,
+    start: new Date(promesa.start),
+    end: new Date(promesa.end),
+    backgroundColor: promesa.backgroundColor,
     extendedProps: {
-      estado: promesa.estado,
-      celular: promesa.cliente.celular,
+      estado: promesa.extendedProps.estado,
+      celular: promesa.extendedProps.celular,
     },
   }));
 };

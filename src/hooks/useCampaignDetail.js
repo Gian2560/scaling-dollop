@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   getCampaignById,
-  addClientToCampaign,
   removeClientFromCampaign,
-  uploadClients,
+  uploadClients, sendCampaignMessages
 } from "../../services/campaignService";
 
 const useCampaignDetail = (id) => {
@@ -24,6 +23,15 @@ const useCampaignDetail = (id) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+  const handleSendCampaign = async () => {
+    try {
+      await sendCampaignMessages(id);
+      alert("Mensajes enviados correctamente!");
+    } catch (err) {
+      console.error("❌ Error al enviar campaña:", err);
+      alert("Hubo un error al enviar los mensajes.");
     }
   };
 
@@ -51,6 +59,7 @@ const useCampaignDetail = (id) => {
       await uploadClients(id, file);
       fetchCampaignDetail();
     },
+    handleSendCampaign,
   };
 };
 

@@ -29,6 +29,7 @@ const CampaignDetailPage = () => {
     fetchCampaignDetail,
     handleRemoveClient,
     handleUploadClients,
+    handleSendCampaign,
   } = useCampaignDetail(campaignId);
 
   useEffect(() => {
@@ -103,6 +104,9 @@ const CampaignDetailPage = () => {
             </Button>
             <Button variant="contained" color="primary" onClick={() => setOpenModal(true)}>
               Subir Clientes desde Excel
+            </Button>
+            <Button variant="contained" color="success" onClick={handleSendCampaign}>
+              Enviar Mensajes
             </Button>
           </Box>
 

@@ -1,21 +1,22 @@
 import { NextResponse } from "next/server";
-import client from "@/lib/twilio";
+import prisma from "@/lib/prisma"; // Asegúrate de que el cliente de Prisma está bien importado
 
 export async function GET() {
-    try {
-        // 🔹 Obtener los templates de Twilio desde la API v1
-        const templates = await client.messaging.v1.templates.list();
+  try {
+    // 🔹 Obtener todos los templates de la base de datos
+    const templates = await prisma.template.findMany({
+      select: {
+        id: true, // ✅ ID del template
+        mensaje: true, // ✅ Mensaje del template
+        template_content_sid: true, // ✅ Identificador del template (SSID)
+        nombre_template: true,
+      },
+      orderBy: { created_at: "desc" }, // 🔹 Ordenar por fecha de creación descendente
+    });
 
-        // 🔹 Formatear datos antes de enviarlos al frontend
-        const formattedTemplates = templates.map(template => ({
-            id: template.sid,
-            nombre_template: template.friendlyName,
-            category: template.category,
-        }));
-
-        return NextResponse.json(formattedTemplates);
-    } catch (error) {
-        console.error("Error al obtener templates:", error);
-        return NextResponse.json({ error: "Error al obtener templates" }, { status: 500 });
-    }
+    return NextResponse.json(templates);
+  } catch (error) {
+    console.error("❌ Error al obtener templates:", error);
+    return NextResponse.json({ error: "Error al obtener templates" }, { status: 500 });
+  }
 }

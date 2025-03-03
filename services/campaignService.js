@@ -56,3 +56,23 @@ export const removeClientFromCampaign = async (id, clientId) => {
     return response.data;
   };
   
+
+  export const updateCampaign = async (campaignId, campaignData) => {
+    try {
+      const response = await axiosInstance.put(`/campaings/${campaignId}`, campaignData);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error al actualizar campaña:", error);
+      throw new Error(error.response?.data?.error || "Error al actualizar la campaña");
+    }
+  };
+
+  export const sendCampaignMessages = async (campaignId) => {
+    try {
+      const response = await axiosInstance.post(`/campaings/${campaignId}/send`);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error al enviar campaña:", error);
+      throw error;
+    }
+  };

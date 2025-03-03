@@ -53,19 +53,17 @@ const CampaignsPage = () => {
             setPagination={setPagination}
             sortModel={sortModel}
             setSortModel={setSortModel}
-            
+
           />
         </Box>
       )}
 
-      {/* 🔹 Modal para Crear/Editar Campaña */}
       <CampaignModal
         open={openModal}
         onClose={handleClose}
         campaign={selectedCampaign}
-        templates={templates} // 🔹 Pasamos los templates
-        onSave={handleCreateCampaign} // 🔹 Crear campaña
-        onUploadClients={handleUploadClients} // 🔹 Subir clientes desde Excel
+        templates={templates}
+        onSave={handleCreateCampaign} // ✅ Ahora maneja tanto creación como edición
       />
     </Box>
   );

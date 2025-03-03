@@ -94,7 +94,7 @@ export async function POST(req, context) {
                             nombre: Nombre,
                             documento_identidad: "",
                             tipo_documento: "Desconocido",
-                            estado: "activo",
+                            estado: "en seguimiento",
                         },
                     });
                     console.log(`✅ Cliente creado en MySQL con ID: ${clienteExistente.cliente_id}`);

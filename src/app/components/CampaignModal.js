@@ -1,12 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
-  TextField, Button, MenuItem, Table, TableHead, 
-  TableRow, TableCell, TableBody, Typography, Box 
+  TextField, Button, MenuItem 
 } from "@mui/material";
-import * as XLSX from "xlsx"; 
 
-const CampaignModal = ({ open, onClose, campaign, templates, onSave, onUploadClients }) => {
+const CampaignModal = ({ open, onClose, campaign, templates, onSave }) => {
   const [form, setForm] = useState({
     nombre_campanha: "",
     descripcion: "",
@@ -14,14 +12,9 @@ const CampaignModal = ({ open, onClose, campaign, templates, onSave, onUploadCli
     fecha_fin: "",
   });
 
-  const [file, setFile] = useState(null);
-  const [clients, setClients] = useState([]); 
-  const fileInputRef = useRef(null);
-
-  // 🔹 Cargar datos de `campaign` al abrir el modal
+  // 🔹 Cargar datos de la campaña en el formulario
   useEffect(() => {
     if (campaign) {
-      console.log("🟢 Cargando datos de campaña:", campaign);
       setForm({
         nombre_campanha: campaign.nombre_campanha || "",
         descripcion: campaign.descripcion || "",
@@ -41,39 +34,6 @@ const CampaignModal = ({ open, onClose, campaign, templates, onSave, onUploadCli
   // 🔹 Manejar cambios en los campos del formulario
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // 🔹 Manejar subida de archivo Excel
-  const handleFileUpload = (event) => {
-    const uploadedFile = event.target.files[0];
-    if (!uploadedFile) return;
-    setFile(uploadedFile);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-      const formattedClients = jsonData.map((row) => ({
-        numero: row["Numero"],
-        nombre: row["Nombre"],
-      }));
-
-      setClients(formattedClients);
-    };
-    reader.readAsArrayBuffer(uploadedFile);
-  };
-
-  // 🔹 Eliminar archivo cargado y limpiar la vista previa
-  const handleRemoveFile = () => {
-    setFile(null);
-    setClients([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   return (
@@ -125,43 +85,6 @@ const CampaignModal = ({ open, onClose, campaign, templates, onSave, onUploadCli
           onChange={handleChange} 
           InputLabelProps={{ shrink: true }} 
         />
-
-        {/* 🔹 Subida de archivo Excel */}
-        <Typography variant="h6" mt={2}>Subir Lista de Clientes</Typography>
-        <input 
-          ref={fileInputRef} 
-          type="file" 
-          accept=".xlsx, .xls" 
-          onChange={handleFileUpload} 
-        />
-
-        {clients.length > 0 && (
-          <>
-            <Typography variant="h6" mt={2}>Vista Previa de Clientes</Typography>
-            <Box sx={{ maxHeight: 200, overflowY: "auto", border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Número</TableCell>
-                    <TableCell>Nombre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {clients.map((client, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{client.numero}</TableCell>
-                      <TableCell>{client.nombre}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
-
-            <Button onClick={handleRemoveFile} color="secondary" variant="outlined" sx={{ mt: 2 }}>
-              Eliminar Archivo
-            </Button>
-          </>
-        )}
       </DialogContent>
 
       <DialogActions>
@@ -177,15 +100,6 @@ const CampaignModal = ({ open, onClose, campaign, templates, onSave, onUploadCli
         >
           Guardar
         </Button>
-        {campaign && file && (
-          <Button 
-            color="secondary" 
-            variant="contained" 
-            onClick={() => onUploadClients(campaign.id, file)}
-          >
-            Subir Clientes
-          </Button>
-        )}
       </DialogActions>
     </Dialog>
   );

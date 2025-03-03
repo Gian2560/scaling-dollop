@@ -17,6 +17,7 @@ export const CAMPAIGN_COLUMNS = (onSend, onEdit, onDelete) => [
       return(
       <ActionButton
         options={[
+          { label: "Editar", action: () => onEdit(params.row) },
           { label: "Detalle", action: () => router.push(`/campaigns/${params.row.id}`) },
           { label: "Eliminar", action: () => onDelete(params.row.id) }
         ]}

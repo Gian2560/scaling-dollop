@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { parse } from "csv-parse/sync";
 import * as XLSX from "xlsx";
+import { MongoClient } from "mongodb";
+require("dotenv").config();
+
+const uri = process.env.DATABASE_URL_MONGODB;
+const clientPromise = new MongoClient(uri).connect();
 
 export async function POST(req, context) {
     try {
@@ -18,6 +23,7 @@ export async function POST(req, context) {
             console.error("❌ Error: El ID de la campaña no es un número válido");
             return NextResponse.json({ error: "El ID de la campaña no es un número válido" }, { status: 400 });
         }
+
         console.log(`✅ ID de campaña recibido: ${campanhaId}`);
 
         const formData = await req.formData();
@@ -33,17 +39,12 @@ export async function POST(req, context) {
         const buffer = Buffer.from(await file.arrayBuffer());
         let clientes = [];
 
-        // 📌 Detectar si el archivo es Excel o CSV
         if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
             console.log("📌 Procesando archivo Excel...");
             const workbook = XLSX.read(buffer, { type: "buffer" });
             const sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[sheetName];
             clientes = XLSX.utils.sheet_to_json(sheet);
-        } else if (file.name.endsWith(".csv")) {
-            console.log("📌 Procesando archivo CSV...");
-            const csvData = buffer.toString();
-            clientes = parse(csvData, { columns: true, skip_empty_lines: true });
         } else {
             console.error("❌ Error: Formato de archivo no válido");
             return NextResponse.json({ error: "Formato de archivo no válido. Debe ser .xlsx o .csv" }, { status: 400 });
@@ -57,6 +58,8 @@ export async function POST(req, context) {
         console.log("📌 Clientes cargados desde archivo:", clientes);
 
         const clientesProcesados = [];
+        const mongoClient = await clientPromise;
+        const db = mongoClient.db(process.env.MONGODB_DB);
 
         for (const cliente of clientes) {
             let { Numero, Nombre } = cliente;
@@ -66,67 +69,74 @@ export async function POST(req, context) {
                 continue;
             }
 
-            // 📌 Asegurar que Numero es un string antes de formatearlo
             Numero = String(Numero).trim();
-
-            // 📌 Agregar +51 si no lo tiene
             if (!Numero.startsWith("+51")) {
                 Numero = `+51${Numero}`;
             }
-            console.log(`🔍 Buscando cliente con número: ${Numero}`);
-            const clientes2 = await prisma.cliente.findMany({
-              });
-            console.log("ADadDadaD",clientes2);
-            // 📌 Buscar si el cliente ya existe en la base de datos por número
-            let clienteExistente = null;
-            try {
-                clienteExistente = await prisma.cliente.findFirst({
-                    where: { celular: Numero },
-                });
-            } catch (err) {
-                console.error("❌ Error en la consulta de cliente existente:", err);
-            }
 
-            if (clienteExistente === null) {
-                console.log(`🔹 Cliente no encontrado, creando nuevo: ${Nombre}`);
+            console.log(`🔍 Buscando cliente con número: ${Numero}`);
+
+            // 📌 Buscar si el cliente existe en MySQL
+            let clienteExistente = await prisma.cliente.findFirst({
+                where: { celular: Numero },
+            });
+
+            // 📌 Buscar si el cliente existe en MongoDB
+            let clienteMongo = await db.collection("clientes").findOne({ celular: Numero });
+
+            // 📌 Si el cliente NO existe en MySQL, crearlo
+            if (!clienteExistente) {
+                console.log(`🔹 Cliente no encontrado en MySQL, creando nuevo: ${Nombre}`);
                 try {
                     clienteExistente = await prisma.cliente.create({
                         data: {
                             celular: Numero,
                             nombre: Nombre,
-                            documento_identidad: "", // 📌 No tenemos el DNI en el archivo
+                            documento_identidad: "",
                             tipo_documento: "Desconocido",
                             estado: "activo",
                         },
                     });
-                    console.log(`✅ Cliente creado con ID: ${clienteExistente.cliente_id}`);
+                    console.log(`✅ Cliente creado en MySQL con ID: ${clienteExistente.cliente_id}`);
                 } catch (err) {
-                    console.error("❌ Error al crear cliente:", err);
+                    console.error("❌ Error al crear cliente en MySQL:", err);
                     continue;
                 }
             } else {
-                console.log(`✅ Cliente ya existe en la BD con ID: ${clienteExistente.cliente_id}`);
+                console.log(`✅ Cliente ya existe en MySQL con ID: ${clienteExistente.cliente_id}`);
             }
 
-            if (!clienteExistente || !clienteExistente.cliente_id) {
-                console.error("❌ Cliente no encontrado ni creado correctamente:", cliente);
-                continue;
+            // 📌 Si el cliente NO existe en MongoDB, crearlo
+            if (!clienteMongo) {
+                console.log(`🔹 Cliente no encontrado en MongoDB, creando nuevo: ${Nombre}`);
+                try {
+                    const nuevoClienteMongo = {
+                        id_cliente: `cli_${clienteExistente.cliente_id}`,
+                        nombre: Nombre,
+                        celular: Numero,
+                        correo: "",
+                        conversaciones: [], // Inicialmente sin conversaciones
+                    };
+
+                    await db.collection("clientes").insertOne(nuevoClienteMongo);
+                    console.log(`✅ Cliente creado en MongoDB con ID: cli_${clienteExistente.cliente_id}`);
+                } catch (err) {
+                    console.error("❌ Error al crear cliente en MongoDB:", err);
+                    continue;
+                }
+            } else {
+                console.log(`✅ Cliente ya existe en MongoDB con ID: ${clienteMongo.id_cliente}`);
             }
 
             const clienteId = clienteExistente.cliente_id;
 
             // 📌 Verificar si el cliente ya está en la campaña
-            let clienteCampanhaExistente = null;
-            try {
-                clienteCampanhaExistente = await prisma.cliente_campanha.findFirst({
-                    where: {
-                        cliente_id: clienteId,
-                        campanha_id: campanhaId,
-                    },
-                });
-            } catch (err) {
-                console.error("❌ Error al consultar si el cliente ya está en la campaña:", err);
-            }
+            let clienteCampanhaExistente = await prisma.cliente_campanha.findFirst({
+                where: {
+                    cliente_id: clienteId,
+                    campanha_id: campanhaId,
+                },
+            });
 
             if (!clienteCampanhaExistente) {
                 console.log(`🔹 Cliente ${clienteId} no está en la campaña, agregando...`);

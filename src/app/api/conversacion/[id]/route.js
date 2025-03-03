@@ -11,12 +11,12 @@ const clientPromise = new MongoClient(uri).connect();
 
 export async function GET(request, context) {
     try {
-
+      
         
 
     const params = await context.params;  
       const { id } = params; // Obtener el ID del cliente desde la URL
-  
+      
       // Verificar si el cliente existe en la base de datos
       const cliente = await prisma.cliente.findUnique({
         where: { cliente_id: parseInt(id) },

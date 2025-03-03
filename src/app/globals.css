@@ -21,3 +21,67 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   height: 100%;
 }
+
+
+@keyframes moveStars {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -1000px 1000px;
+  }
+}
+
+@keyframes neonGlow {
+  0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+}
+
+@keyframes glitch {
+  0% { text-shadow: 3px 3px red, -3px -3px cyan; }
+  25% { text-shadow: -3px 3px red, 3px -3px cyan; }
+  50% { text-shadow: 3px -3px red, -3px 3px cyan; }
+  75% { text-shadow: -3px -3px red, 3px 3px cyan; }
+  100% { text-shadow: 3px 3px red, -3px -3px cyan; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes nebula {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(180deg); }
+}
+
+@keyframes nebulaReverse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(-180deg); }
+}
+
+/* Aplicando animaciones */
+.animate-moveStars {
+  animation: moveStars 60s linear infinite;
+}
+
+.animate-neonGlow {
+  animation: neonGlow 2s infinite alternate;
+}
+
+.animate-glitch {
+  animation: glitch 0.2s infinite alternate;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1.5s ease-out;
+}
+
+.animate-nebula {
+  animation: nebula 10s infinite alternate ease-in-out;
+}
+
+.animate-nebulaReverse {
+  animation: nebulaReverse 12s infinite alternate ease-in-out;
+}

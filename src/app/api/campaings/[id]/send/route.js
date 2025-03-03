@@ -41,15 +41,23 @@ export async function POST(req, { params }) {
 
       const celularFormatted = `whatsapp:${cliente.celular.trim()}`;
       const contentSid = campaign.template.template_content_sid; // ✅ Obtener el `contentSid` de la BD
-      const contentVariables = JSON.stringify({ 1: cliente.nombre }); // ✅ Enviar el nombre como variable
+
+      // 🔹 Construir variables dinámicas si el template lo requiere
+      let messagePayload = {
+        from: twilioWhatsAppNumber,
+        to: celularFormatted,
+        contentSid, // ✅ Usar la plantilla de Twilio
+      };
+
+      if (campaign.template.parametro) {
+        // ✅ Si el template tiene parámetros, enviar variables dinámicas
+        messagePayload.contentVariables = JSON.stringify({
+          1: cliente.nombre, // Puedes expandir esto con más parámetros si el template los requiere
+        });
+      }
 
       try {
-        const message = await client.messages.create({
-          from: twilioWhatsAppNumber,
-          to: celularFormatted,
-          contentSid, // ✅ Usar la plantilla de Twilio
-          contentVariables, // ✅ Variables para la plantilla
-        });
+        const message = await client.messages.create(messagePayload);
 
         console.log(`📨 Mensaje enviado a ${cliente.celular}: ${message.sid}`);
         sentMessages.push({ to: cliente.celular, status: "sent", sid: message.sid });

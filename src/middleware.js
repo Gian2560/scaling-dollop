@@ -5,12 +5,16 @@ export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   // 🔹 Definir rutas protegidas
-  const protectedRoutes = ["/dashboard", "/settings","/clientes"];
+  const protectedRoutes = ["/dashboard", "/settings", "/clientes", "/campaigns", "/usuarios", "/promesasPago"];
 
-  // 🔹 Redirigir al login si no hay token y la ruta es protegida
+  // 🔹 Si la ruta es protegida y el usuario no tiene token, redirigir a login
   if (!token && protectedRoutes.some((path) => req.nextUrl.pathname.startsWith(path))) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // 🔹 Si la ruta no coincide con las rutas protegidas y tampoco es una API, redirigir a 404
+  if (!protectedRoutes.some((path) => req.nextUrl.pathname.startsWith(path)) && !req.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.rewrite(new URL("/404", req.url)); // ✅ Redirigir a la página 404
   }
 
   const res = NextResponse.next();
@@ -27,5 +31,5 @@ export async function middleware(req) {
 
 // 🔹 Aplica el middleware solo en rutas de API y protegidas
 export const config = {
-  matcher: ["/api/:path*", "/dashboard", "/settings"], // Agrega más rutas si es necesario
+  matcher: ["/api/:path*", "/dashboard", "/settings", "/clientes", "/campaigns", "/usuarios", "/promesasPago"],
 };

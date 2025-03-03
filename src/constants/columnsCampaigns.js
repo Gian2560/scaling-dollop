@@ -1,4 +1,5 @@
 import ActionButton from "@/app/components/ActionButton";
+import { useRouter } from "next/navigation";
 
 export const CAMPAIGN_COLUMNS = (onSend, onEdit, onDelete) => [
   { field: "id", headerName: "ID", width: 80 }, 
@@ -11,14 +12,16 @@ export const CAMPAIGN_COLUMNS = (onSend, onEdit, onDelete) => [
     field: "acciones",
     headerName: "Acciones",
     width: 150,
-    renderCell: (params) => (
+    renderCell: (params) => {
+      const router = useRouter();
+
+      return(
       <ActionButton
         options={[
-          { label: "Editar", action: () => onSend(params.row) },
-          { label: "Enviar", action: () => onEdit(params.row.id) },
+          { label: "Detalle", action: () => router.push(`/campaigns/${params.row.id}`) },
           { label: "Eliminar", action: () => onDelete(params.row.id) }
         ]}
-      />
-    ),
+      />)
+    },
   },
 ];

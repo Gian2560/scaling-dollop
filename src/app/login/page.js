@@ -70,13 +70,11 @@ export default function LoginPage() {
             required
           />
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center">
           <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
             Entrar
           </button>
-          <Link href="/register" className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-            Registrarse
-          </Link>
+         
         </div>
       </form>
     </div>

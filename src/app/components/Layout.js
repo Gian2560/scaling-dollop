@@ -28,6 +28,8 @@ import BadgeIcon from "@mui/icons-material/Badge";
 import ContactPageIcon from "@mui/icons-material/ContactPage";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useEffect } from "react";
+
 
 const drawerWidth = 240;
 
@@ -36,6 +38,14 @@ export default function Layout({ children }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true); // Control de la barra lateral
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  useEffect(() => {
+    console.log("Estado de la sesión:", session);
+    if (session) {
+      console.log("Usuario logueado:", session.user);
+      console.log("Rol del usuario:", session.user.role);
+    }
+  }, [session]); // Se ejecutará cuando session cambie
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -174,21 +184,42 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Promesas de Pago" />
         </ListItem>
-        <ListItem
-          button="true"
-          onClick={() => router.push("/campaigns")}
-          sx={{
-            "&:hover": { bgcolor: "#2D3748" },
-            px: 3,
-            py: 1.5,
-          }}
-        >
-          <ListItemIcon sx={{ color: "#fff" }}>
-            <CampaignIcon />
-          </ListItemIcon>
-          <ListItemText primary="Campañas" />
-        </ListItem>
-        <ListItem
+
+        {session?.user?.role === "administrador" && (
+          <ListItem
+            button="true"
+            onClick={() => router.push("/campaigns")}
+            sx={{
+              "&:hover": { bgcolor: "#2D3748" },
+              px: 3,
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon sx={{ color: "#fff" }}>
+              <CampaignIcon />
+            </ListItemIcon>
+            <ListItemText primary="Campañas" />
+          </ListItem>)
+        }
+
+        {session?.user?.role === "administrador" && (
+          <ListItem
+            button="true"
+            onClick={() => router.push("/usuarios")}
+            sx={{
+              "&:hover": { bgcolor: "#2D3748" },
+              px: 3,
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon sx={{ color: "#fff" }}>
+              <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Usuarios" />
+          </ListItem>
+        )}
+
+        {/* <ListItem
           button="true"
           onClick={() => router.push("/usuarios")}
           sx={{
@@ -201,7 +232,8 @@ export default function Layout({ children }) {
             <PeopleIcon />
           </ListItemIcon>
           <ListItemText primary="Usuarios" />
-        </ListItem>
+        </ListItem> */}
+
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
       <List>
@@ -242,20 +274,24 @@ export default function Layout({ children }) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ flexGrow: 1, fontWeight: "bold" }}
-          >
-            CRM  DE REACTIVACIONES
-          </Typography>
+          {/* Contenedor con imagen y texto */}
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            {/* Imagen al lado del texto */}
+            <img
+              src="https://maquimas.pe/wp-content/themes/maquisistema/img/common/maquiplus-logo.png"
+              alt="Logo"
+              style={{ height: 40, marginRight: 10 }}
+            />
+            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
+            REACTIVACIONES
+            </Typography>
+          </Box>
           <IconButton color="inherit" sx={{ mr: 2 }}>
             <NotificationsIcon />
           </IconButton>
           <Avatar
             alt="Usuario"
-            src="https://trasplantecapilar.pe/wp-content/uploads/2024/09/logo-ifc.jpg"
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAJFBMVEVHcEztNyLsNyLnNiHuOCPtNyLtNyPuNyLuOCPrNiLuOCPuOCOxF7LxAAAAC3RSTlMASTUO7Gmkic4hukCMuxcAAAB2SURBVCiRzZLZDoAgDARLqVz9//9VTjXZkvjmvJGhkN2U6IaLSMgEObTByHkdIBmndECGKY+vk3n35xxFgzWLqCaYxL6PELd6QTAZc5VCttO0l9tngy2vkpPlQg3KrrEy9aN7rQRP6UFTv5P7NRltRCh7k093At7KD2uUo+ERAAAAAElFTkSuQmCC"
           />
         </Toolbar>
       </AppBar>

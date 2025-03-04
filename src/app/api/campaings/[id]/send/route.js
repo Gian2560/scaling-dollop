@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { MongoClient } from "mongodb";
+import clientPromise from "@/lib/mongodb"; // 🔹 Importa la conexión persistente
 import twilio from "twilio";
 
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-const mongoClient = new MongoClient(process.env.DATABASE_URL_MONGODB);
 
 export async function POST(req, { params }) {
   try {
@@ -30,8 +29,8 @@ export async function POST(req, { params }) {
     const twilioWhatsAppNumber = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
     const sentMessages = [];
 
-    // 🔹 Conectar a MongoDB
-    await mongoClient.connect();
+    // 🔹 Obtener la conexión a MongoDB de clientPromise
+    const mongoClient = await clientPromise;
     const db = mongoClient.db(process.env.MONGODB_DB);
     const collection = db.collection("clientes");
 
@@ -65,44 +64,77 @@ export async function POST(req, { params }) {
         // 📌 Buscar si el cliente ya tiene una conversación en MongoDB
         const clienteMongo = await collection.findOne({ celular: cliente.celular });
 
-        if (clienteMongo) {
-          // 🔹 Si existe, actualizar la conversación activa
-          await collection.updateOne(
-            { celular: cliente.celular, "conversaciones.estado": "activa" },
-            {
-              $push: {
-                "conversaciones.$.interacciones": {
-                  fecha: new Date(),
-                  mensaje_chatbot: campaign.template.mensaje,
-                  mensaje_id: message.sid,
-                },
-              },
-              $set: { "conversaciones.$.ultima_interaccion": new Date() },
-            }
+        if (clienteMongo && clienteMongo.conversaciones.length > 0) {
+          // 🔹 Si ya tiene conversaciones, verificar si hay una activa
+          const tieneConversacionActiva = clienteMongo.conversaciones.some(
+            (conv) => conv.estado === "activa"
           );
+
+          if (tieneConversacionActiva) {
+            // 🔹 Si existe, actualizar la conversación activa
+            await collection.updateOne(
+              { celular: cliente.celular, "conversaciones.estado": "activa" },
+              {
+                $push: {
+                  "conversaciones.$.interacciones": {
+                    fecha: new Date(),
+                    mensaje_chatbot: campaign.template.mensaje,
+                    mensaje_id: message.sid,
+                  },
+                },
+                $set: { "conversaciones.$.ultima_interaccion": new Date() },
+              }
+            );
+          } else {
+            // 🔹 Si no hay conversaciones activas, agregar una nueva
+            await collection.updateOne(
+              { celular: cliente.celular },
+              {
+                $push: {
+                  conversaciones: {
+                    conversacion_id: `conv_${Date.now()}`,
+                    estado: "activa",
+                    ultima_interaccion: new Date(),
+                    interacciones: [
+                      {
+                        fecha: new Date(),
+                        mensaje_chatbot: campaign.template.mensaje,
+                        mensaje_id: message.sid,
+                      },
+                    ],
+                  },
+                },
+              }
+            );
+          }
         } else {
-          // 🔹 Si no existe, crear una nueva conversación
+          // 🔹 Si no tiene conversaciones, creamos la estructura completa
           await collection.updateOne(
             { celular: cliente.celular },
             {
-              $push: {
-                conversaciones: {
-                  conversacion_id: `conv_${Date.now()}`,
-                  estado: "activa",
-                  ultima_interaccion: new Date(),
-                  interacciones: [
-                    {
-                      fecha: new Date(),
-                      mensaje_chatbot: campaign.template.mensaje,
-                      mensaje_id: message.sid,
-                    },
-                  ],
-                },
+              $set: {
+                celular: cliente.celular,
+                conversaciones: [
+                  {
+                    conversacion_id: `conv_${Date.now()}`,
+                    estado: "activa",
+                    ultima_interaccion: new Date(),
+                    interacciones: [
+                      {
+                        fecha: new Date(),
+                        mensaje_chatbot: campaign.template.mensaje,
+                        mensaje_id: message.sid,
+                      },
+                    ],
+                  },
+                ],
               },
             },
             { upsert: true }
           );
         }
+
+
 
         sentMessages.push({ to: cliente.celular, status: "sent", sid: message.sid });
       } catch (error) {
@@ -139,7 +171,5 @@ export async function POST(req, { params }) {
   } catch (error) {
     console.error("❌ Error en el envío de mensajes con Twilio:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
-  } finally {
-    await mongoClient.close(); // Cerrar conexión con MongoDB
   }
 }

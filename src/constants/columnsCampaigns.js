@@ -2,7 +2,7 @@ import ActionButton from "@/app/components/ActionButton";
 import { useRouter } from "next/navigation";
 import { Box } from "@mui/material";
 
-export const CAMPAIGN_COLUMNS = (onSend, onEdit, onDelete) => [
+export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
   {
     field: "id",
     headerName: "ID",

@@ -41,22 +41,29 @@ const PromesasPagoPage = () => {
 
       {/* Botón de actualización */}
       <Box sx={{ mb: 3 }}>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleRefresh} 
-          sx={{ 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            padding: "8px 20px", 
-            borderRadius: "5px",  // Menos redondeo para el botón
-            boxShadow: 2,
-            textTransform: "none",  // Evitar que el texto del botón se convierta en mayúsculas
-          }}
-        >
-          Actualizar Datos
-        </Button>
+      <Button 
+  variant="contained" 
+  onClick={handleRefresh} 
+  sx={{ 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    padding: "8px 20px", 
+    borderRadius: "2px",  // Aumenta el radio de los bordes para un diseño más suave
+    boxShadow: 3,  // Un poco más de sombra para darle un toque moderno
+    textTransform: "none",  // Evitar que el texto se convierta en mayúsculas
+    backgroundColor: "#007391",  // El color principal de tu diseño (ajústalo según tu paleta)
+    "&:hover": { 
+      backgroundColor: "#005c6b",  // Un tono más oscuro para el hover
+      boxShadow: 6,  // Efecto de sombra más fuerte cuando se pasa el ratón
+    },
+    color: "#fff",  // Texto blanco para un buen contraste con el fondo
+    transition: "all 0.3s ease-in-out",  // Suaviza la transición entre estados
+  }}
+>
+  Actualizar 
+</Button>
+
       </Box>
 
       {/* Vista del calendario */}

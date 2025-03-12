@@ -5,7 +5,7 @@ import { TextField, MenuItem, Button, Grid, FormControl, InputLabel, Select } fr
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { es } from "date-fns/locale";  // 📌 Asegura el idioma correcto para español
+import { es } from "date-fns/locale"; // 📌 Asegura el idioma correcto para español
 import { startOfDay, endOfDay, subDays } from "date-fns";
 
 const presets = [
@@ -51,89 +51,124 @@ export default function ClientesFilters({ filters, setFilters }) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
-      <div className="flex flex-wrap gap-4 mb-4">
-        <TextField
-          label="Buscar..."
-          size="small"
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-        />
+      <Grid container spacing={2} alignItems="center" sx={{ padding: 3 }}>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Buscar..."
+            size="small"
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            fullWidth
+            variant="outlined"
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+            }}
+          />
+        </Grid>
 
-        <TextField
-          select
-          label="Estado"
-          size="small"
-          value={filters.estado}
-          onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-        >
-          <MenuItem value="Todos">Todos</MenuItem>
-          <MenuItem value="Interesado">Interesado</MenuItem>
-          <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
-          <MenuItem value="No interesado">No interesado</MenuItem>
-          <MenuItem value="Finalizado">Finalizado</MenuItem>
-          <MenuItem value="En seguimiento">En seguimiento</MenuItem>
-        </TextField>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            select
+            label="Estado"
+            size="small"
+            value={filters.estado}
+            onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+            fullWidth
+            variant="outlined"
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <MenuItem value="Todos">Todos</MenuItem>
+            <MenuItem value="Interesado">Interesado</MenuItem>
+            <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
+            <MenuItem value="No interesado">No interesado</MenuItem>
+            <MenuItem value="Finalizado">Finalizado</MenuItem>
+            <MenuItem value="En seguimiento">En seguimiento</MenuItem>
+          </TextField>
+        </Grid>
 
-        {/* 📌 Filtro de Rango de Fechas */}
-        <FormControl size="small">
-          <InputLabel>Rango de Fechas</InputLabel>
-          <Select value={preset} onChange={handlePresetChange}>
-            {presets.map((preset) => (
-              <MenuItem key={preset.value} value={preset.value}>
-                {preset.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth size="small" variant="outlined">
+            <InputLabel>Rango de Fechas</InputLabel>
+            <Select
+              value={preset}
+              onChange={handlePresetChange}
+              label="Rango de Fechas"
+              sx={{ borderRadius: "8px", backgroundColor: "#f9f9f9" }}
+            >
+              {presets.map((preset) => (
+                <MenuItem key={preset.value} value={preset.value}>
+                  {preset.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-        {/* 📅 Mostrar DatePicker solo si es "Personalizado" */}
         {preset === "custom" && (
           <>
-            <DatePicker
-              label="Fecha Inicio"
-              value={startDate}
-              onChange={(newValue) => {
-                setStartDate(newValue);
-                setFilters((prev) => ({
-                  ...prev,
-                  fechaInicio: newValue ? newValue.toISOString() : "",
-                }));
-              }}
-              format="dd/MM/yyyy"
-            />
-            <DatePicker
-              label="Fecha Fin"
-              value={endDate}
-              onChange={(newValue) => {
-                setEndDate(newValue);
-                setFilters((prev) => ({
-                  ...prev,
-                  fechaFin: newValue ? newValue.toISOString() : "",
-                }));
-              }}
-              format="dd/MM/yyyy"
-            />
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="Fecha Inicio"
+                value={startDate}
+                onChange={(newValue) => {
+                  setStartDate(newValue);
+                  setFilters((prev) => ({
+                    ...prev,
+                    fechaInicio: newValue ? newValue.toISOString() : "",
+                  }));
+                }}
+                format="dd/MM/yyyy"
+                renderInput={(params) => <TextField {...params} fullWidth size="small" variant="outlined" />}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="Fecha Fin"
+                value={endDate}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+                  setFilters((prev) => ({
+                    ...prev,
+                    fechaFin: newValue ? newValue.toISOString() : "",
+                  }));
+                }}
+                format="dd/MM/yyyy"
+                renderInput={(params) => <TextField {...params} fullWidth size="small" variant="outlined" />}
+              />
+            </Grid>
           </>
         )}
 
-        {/* 🔄 Botón de Reset */}
-        <Button
-          variant="contained"
-          onClick={() => {
-            setPreset("today");
-            setStartDate(startOfDay(new Date()));
-            setEndDate(endOfDay(new Date()));
-            setFilters({
-              search: "",
-              estado: "Todos",
-              fechaInicio: "",
-              fechaFin: "",
-            });
-          }}
-        >
-          LIMPIAR
-        </Button>
-      </div>
+        <Grid item xs={12}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setPreset("today");
+              setStartDate(startOfDay(new Date()));
+              setEndDate(endOfDay(new Date()));
+              setFilters({
+                search: "",
+                estado: "Todos",
+                fechaInicio: "",
+                fechaFin: "",
+              });
+            }}
+            sx={{
+              backgroundColor: "#007391",
+              "&:hover": { backgroundColor: "#005c6b" },
+              padding: "8px 20px",
+              borderRadius: "2px",
+              fontWeight: "bold",
+            }}
+          >
+            LIMPIAR
+          </Button>
+        </Grid>
+      </Grid>
     </LocalizationProvider>
   );
 }

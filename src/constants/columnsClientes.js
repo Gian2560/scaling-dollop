@@ -23,7 +23,7 @@ const getMotivoStyle = (motivo) => {
     "ADMINISTRATIVO": { color: "rgba(33, 150, 243, 0.9)", backgroundColor: "rgba(33, 150, 243, 0.3)", fontWeight: "normal" },
     "OLVIDO DE PAGO": { color: "rgba(244, 67, 54, 0.9)", backgroundColor: "rgba(244, 67, 54, 0.3)", fontWeight: "normal" },
     "DESCONOCIDO": { color: "rgba(255, 152, 0, 0.9)", backgroundColor: "rgba(255, 152, 0, 0.3)", fontWeight: "normal" },
-    "ECONÓMICO": { color: "rgba(76, 175, 80, 0.9)", backgroundColor: "rgba(76, 175, 80, 0.3)", fontWeight: "normal" },
+    "ECONOMICO": { color: "rgba(76, 175, 80, 0.9)", backgroundColor: "rgba(76, 175, 80, 0.3)", fontWeight: "normal" },
   };
 
   return styles[motivo?.toUpperCase()] || { color: "rgba(224, 224, 224, 0.9)", backgroundColor: "rgba(224, 224, 224, 0.3)", fontWeight: "normal" };

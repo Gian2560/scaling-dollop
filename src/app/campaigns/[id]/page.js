@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useCampaignDetail from "@/hooks/useCampaignDetail";
@@ -7,16 +8,18 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableRow, TableCell, TableBody, Paper, Divider
 } from "@mui/material";
 import CustomDataGrid from "@/app/components/CustomDataGrid";
-import * as XLSX from "xlsx"; 
+import * as XLSX from "xlsx";
+import { ArrowBack, UploadFile, Send } from "@mui/icons-material"; // Iconos de Material UI
 
 const CampaignDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const campaignId = params?.id;
-  
+
   const [openModal, setOpenModal] = useState(false);
   const [file, setFile] = useState(null);
   const [clients, setClients] = useState([]);
+  const [loadingUpload, setLoadingUpload] = useState(false); // Estado para controlar el spinner
   const fileInputRef = useRef(null);
 
   const {
@@ -30,6 +33,7 @@ const CampaignDetailPage = () => {
     handleRemoveClient,
     handleUploadClients,
     handleSendCampaign,
+    snackbar,
   } = useCampaignDetail(campaignId);
 
   useEffect(() => {
@@ -38,7 +42,6 @@ const CampaignDetailPage = () => {
     }
   }, [campaignId]);
 
-  // 🔹 Manejar subida de archivo Excel
   const handleFileUpload = (event) => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
@@ -53,9 +56,9 @@ const CampaignDetailPage = () => {
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
       const formattedClients = jsonData.map((row, index) => ({
-        id: index + 1, // ✅ ID temporal para la vista previa
-        numero: row["Numero"], // 🔹 Número de teléfono
-        nombre: row["Nombre"], // 🔹 Nombre del cliente
+        id: index + 1,
+        numero: row["Numero"],
+        nombre: row["Nombre"],
       }));
 
       setClients(formattedClients);
@@ -63,27 +66,26 @@ const CampaignDetailPage = () => {
     reader.readAsArrayBuffer(uploadedFile);
   };
 
-  // 🔹 Enviar clientes al backend
   const handleSaveClients = async () => {
     if (!file) return;
-    
+    setLoadingUpload(true); // Activar el estado de carga
     await handleUploadClients(file);
     setOpenModal(false);
     setFile(null);
     setClients([]);
-    fetchCampaignDetail(); // ✅ Actualizar la lista de clientes después de subir
+    fetchCampaignDetail();
+    setLoadingUpload(false); // Desactivar el estado de carga
   };
 
   return (
-    <Box p={3} width="100%" maxWidth="1200px" margin="auto">
+    <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%">
       {loading ? (
         <CircularProgress />
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          {/* 🔹 Información general de la campaña */}
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h4" sx={{ fontWeight: "bold", color: "#333" }}>
             Detalle de Campaña: {campaign?.nombre_campanha}
           </Typography>
 
@@ -99,18 +101,50 @@ const CampaignDetailPage = () => {
           <Divider sx={{ my: 2 }} />
 
           <Box display="flex" justifyContent="space-between" my={2}>
-            <Button variant="contained" color="secondary" onClick={() => router.push("/campaigns")}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => router.push("/campaigns")}
+              sx={{
+                backgroundColor: "#254e59", 
+                "&:hover": {
+                  backgroundColor: "#1a363d", 
+                },
+              }}
+              startIcon={<ArrowBack />}
+            >
               Volver
             </Button>
-            <Button variant="contained" color="primary" onClick={() => setOpenModal(true)}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpenModal(true)}
+              sx={{
+                backgroundColor: "#007391", 
+                "&:hover": {
+                  backgroundColor: "#005c6b", 
+                },
+              }}
+              startIcon={<UploadFile />}
+            >
               Subir Clientes desde Excel
             </Button>
-            <Button variant="contained" color="success" onClick={handleSendCampaign}>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleSendCampaign}
+              sx={{
+                backgroundColor: "#388e3c", 
+                "&:hover": {
+                  backgroundColor: "#00600f", 
+                },
+              }}
+              startIcon={<Send />}
+            >
               Enviar Mensajes
             </Button>
           </Box>
 
-          {/* 🔹 Tabla de Clientes en la Campaña */}
           <CustomDataGrid
             pagination={pagination}
             setPagination={setPagination}
@@ -129,6 +163,12 @@ const CampaignDetailPage = () => {
                     variant="contained"
                     color="error"
                     onClick={() => handleRemoveClient(params.row.cliente_id)}
+                    sx={{
+                      backgroundColor: "#D32F2F", 
+                      "&:hover": {
+                        backgroundColor: "#9A0007", 
+                      },
+                    }}
                   >
                     Eliminar
                   </Button>
@@ -137,12 +177,10 @@ const CampaignDetailPage = () => {
             ]}
           />
 
-          {/* 🔹 Modal para Subir Clientes */}
           <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="md" fullWidth>
             <DialogTitle>Subir Clientes desde Excel</DialogTitle>
             <DialogContent>
               <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
-              
               {clients.length > 0 && (
                 <>
                   <Typography variant="h6" mt={2}>Vista Previa de Clientes</Typography>
@@ -167,7 +205,6 @@ const CampaignDetailPage = () => {
                 </>
               )}
             </DialogContent>
-
             <DialogActions>
               <Button onClick={() => setOpenModal(false)} color="primary">Cerrar</Button>
               {file && (
@@ -177,6 +214,28 @@ const CampaignDetailPage = () => {
               )}
             </DialogActions>
           </Dialog>
+
+          {snackbar}
+
+          {/* Spinner con overlay oscuro */}
+          {loadingUpload && (
+            <Box
+              sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0, 0, 0, 0.5)", // Fondo oscuro
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                zIndex: 9999, // Asegura que esté por encima de otros componentes
+              }}
+            >
+              <CircularProgress size={60} color="primary" />
+            </Box>
+          )}
         </>
       )}
     </Box>

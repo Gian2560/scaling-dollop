@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Box, Paper, Snackbar, Alert } from "@mui/material";
+import { Box, Snackbar, Alert, Typography, Button } from "@mui/material";
 import CalendarView from "../components/CalendarView";
-import Toolbar from "../components/Toolbar";
 import usePromesasPago from "@/hooks/usePromesasPago";
 
 const PromesasPagoPage = () => {
@@ -13,6 +12,7 @@ const PromesasPagoPage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const calendarRef = useRef(null);
 
+  // Función para actualizar los datos
   const handleRefresh = () => {
     fetchPromesasPago();
     setSnackbarMessage("Datos actualizados");
@@ -21,14 +21,56 @@ const PromesasPagoPage = () => {
   };
 
   return (
-    <Box sx={{ height: "auto", backgroundColor: "#ffffff", p: 3, overflow: "hidden" }}>
-      <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
-        <Toolbar onRefresh={handleRefresh} />
-        <CalendarView calendarRef={calendarRef} events={promesas} loading={loading} />
-      </Paper>
+    <Box sx={{ height: "auto", backgroundColor: "#F7FAFC", p: 3, overflow: "hidden" }}>
+      {/* Título y subtítulo */}
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom 
+          sx={{ fontWeight: "bold", color: "#333" }}  // Definir color del título
+        >
+          Promesas de Pago
+        </Typography>
+        <Typography 
+          variant="body1" 
+          color="textSecondary"  // Definir color para el subtítulo
+          sx={{ color: "#555" }} // Color más suave para el subtítulo
+        >
+        </Typography>
+      </Box>
 
-      <Snackbar open={openSnackbar} autoHideDuration={4000} onClose={() => setOpenSnackbar(false)}>
-        <Alert onClose={() => setOpenSnackbar(false)} severity={snackbarSeverity}>
+      {/* Botón de actualización */}
+      <Box sx={{ mb: 3 }}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRefresh} 
+          sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            padding: "8px 20px", 
+            borderRadius: "5px",  // Menos redondeo para el botón
+            boxShadow: 2,
+            textTransform: "none",  // Evitar que el texto del botón se convierta en mayúsculas
+          }}
+        >
+          Actualizar Datos
+        </Button>
+      </Box>
+
+      {/* Vista del calendario */}
+      <CalendarView calendarRef={calendarRef} events={promesas} loading={loading} />
+
+      {/* Snackbar para mostrar el mensaje de éxito o error */}
+      <Snackbar 
+        open={openSnackbar} 
+        autoHideDuration={4000} 
+        onClose={() => setOpenSnackbar(false)}>
+        <Alert 
+          onClose={() => setOpenSnackbar(false)} 
+          severity={snackbarSeverity} 
+          sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

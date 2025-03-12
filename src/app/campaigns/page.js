@@ -27,7 +27,7 @@ const CampaignsPage = () => {
   } = useCampaigns();
 
   return (
-    <Box p={3} width="100%" maxWidth="1200px" margin="auto">
+    <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%" >
       <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: "#1A202C" }}>CAMPAÑAS</Typography>
       <Box display="flex" justifyContent="space-between" my={2}>
         <Button variant="contained" color="primary" onClick={handleCreate}>

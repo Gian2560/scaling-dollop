@@ -9,7 +9,7 @@ import { CAMPAIGN_COLUMNS } from "@/constants/columnsCampaigns";
 const CampaignsPage = () => {
   const {
     campaigns,
-    templates, // 🔹 Ahora obtenemos templates
+    templates,
     pagination,
     setPagination,
     sortModel,
@@ -20,21 +20,41 @@ const CampaignsPage = () => {
     handleClose,
     fetchCampaigns,
     handleCreate,
-    handleCreateCampaign, // 🔹 Nueva función para crear campañas
-    handleUploadClients, // 🔹 Función para subir clientes desde Excel
+    handleCreateCampaign,
+    handleUploadClients,
     loading,
     error,
   } = useCampaigns();
 
   return (
-    <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%" >
-      <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: "#1A202C" }}>CAMPAÑAS</Typography>
+    <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%">
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        sx={{ color: "#254e59", fontFamily: "'Roboto', sans-serif" }}
+      >
+        CAMPAÑAS
+      </Typography>
+
       <Box display="flex" justifyContent="space-between" my={2}>
-        <Button variant="contained" color="primary" onClick={handleCreate}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleCreate}
+          sx={{
+            backgroundColor: "#007391", // Azul suave
+            "&:hover": {
+              backgroundColor: "#005c6b", // Azul más oscuro
+            },
+           
+            fontFamily: "'Roboto', sans-serif",
+          }}
+        >
           + NUEVA CAMPAÑA
         </Button>
       </Box>
-
+      
       {/* 🔹 Mostrar error si falla la API */}
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -53,7 +73,6 @@ const CampaignsPage = () => {
             setPagination={setPagination}
             sortModel={sortModel}
             setSortModel={setSortModel}
-
           />
         </Box>
       )}

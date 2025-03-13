@@ -29,6 +29,8 @@ import ContactPageIcon from "@mui/icons-material/ContactPage";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect } from "react";
+import { HomeMini, HomeRepairService } from "@mui/icons-material";
+import HomeIcon from "@mui/icons-material/Home";
 
 
 const drawerWidth = 240;
@@ -81,22 +83,21 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#254e59" }} />
       <List>
-        {isAdmin && (
-          <ListItem
-            button="true"
-            onClick={() => router.push("/admin")}
-            sx={{
-              "&:hover": { bgcolor: "#2D3748" },
-              px: 3,
-              py: 1.5,
-            }}
-          >
-            <ListItemIcon sx={{ color: "#fff" }}>
-              <AdminPanelSettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Admin" />
-          </ListItem>
-        )}
+        <ListItem
+          button="true"
+          onClick={() => router.push("/")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <HomeIcon /> {/* Aquí está el error corregido */}
+          </ListItemIcon>
+
+          <ListItemText primary="Home" />
+        </ListItem>
         {/*<ListItem
           button="true"
           onClick={() => router.push("/leads")}
@@ -283,7 +284,7 @@ export default function Layout({ children }) {
               style={{ height: 40, marginRight: 10 }}
             />
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
-            REACTIVACIONES
+              REACTIVACIONES
             </Typography>
           </Box>
           <IconButton color="inherit" sx={{ mr: 2 }}>
@@ -311,8 +312,8 @@ export default function Layout({ children }) {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: isDrawerOpen ? drawerWidth : 0,
-              overflowX: "hidden",
-              transition: "width 0.3s",
+              backgroundColor: "#254e59", // 🔹 Asegura que el fondo es del mismo color
+              borderRight: "none", // 🔹 Elimina la línea entre el Drawer y el contenido
             },
           }}
         >
@@ -323,7 +324,7 @@ export default function Layout({ children }) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+
           transition: "margin-left 0.3s",
           bgcolor: "#F7FAFC",
           height: "100%",

@@ -215,6 +215,33 @@ function UsuarioModal({ open, onClose, onSave, user }) {
     activo: user?.activo || 1,
   });
 
+   // 🚨 Asegurar que al abrir el modal para crear un usuario, los valores sean vacíos
+   useEffect(() => {
+    if (!user) {
+      setFormData({
+        nombre: "",
+        primer_apellido: "",
+        segundo_apellido: "",
+        celular: "",
+        username: "",
+        password: "", // 🔹 Contraseña en blanco al crear
+        rol_id: "",
+        activo: 1,
+      });
+    } else {
+      setFormData({
+        nombre: user?.persona?.nombre || "",
+        primer_apellido: user?.persona?.primer_apellido || "",
+        segundo_apellido: user?.persona?.segundo_apellido || "",
+        celular: user?.persona?.celular || "",
+        username: user?.username || "",
+        password: "", // 🔹 Contraseña en blanco al editar
+        rol_id: user?.rol?.rol_id || "",
+        activo: user?.activo ?? 1,
+      });
+    }
+  }, [user]); // Se ejecuta cuando `user` cambia
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -234,7 +261,7 @@ function UsuarioModal({ open, onClose, onSave, user }) {
         <TextField name="segundo_apellido" label="Segundo Apellido" value={formData.segundo_apellido} onChange={handleChange} fullWidth margin="dense" />
         <TextField name="celular" label="Celular" value={formData.celular} onChange={handleChange} fullWidth margin="dense" />
         <TextField name="username" label="Usuario" value={formData.username} onChange={handleChange} fullWidth margin="dense" required />
-        {user && (
+        {(
           <TextField name="password" label="Nueva Contraseña" type="password" value={formData.password} onChange={handleChange} fullWidth margin="dense" />
         )}
         <FormControl fullWidth margin="dense">

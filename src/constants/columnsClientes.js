@@ -7,27 +7,29 @@ import ActionButton from "@/app/components/ActionButton";
 // 🔹 Función para estilizar etiquetas de estado
 const getEstadoStyle = (estado) => {
   const styles = {
-    "INTERESADO": { color: "rgba(255, 152, 0, 0.9)", backgroundColor: "rgba(255, 235, 59, 0.3)", fontWeight: "normal" },
-    "EN SEGUIMIENTO": { color: "rgba(33, 150, 243, 0.9)", backgroundColor: "rgba(33, 150, 243, 0.3)", fontWeight: "normal" },
-    "NO INTERESADO": { color: "rgba(244, 67, 54, 0.9)", backgroundColor: "rgba(244, 67, 54, 0.3)", fontWeight: "normal" },
-    "PROMESA DE PAGO": { color: "rgba(255, 152, 0, 0.9)", backgroundColor: "rgba(255, 152, 0, 0.3)", fontWeight: "normal" },
-    "FINALIZADO": { color: "rgba(76, 175, 80, 0.9)", backgroundColor: "rgba(76, 175, 80, 0.3)", fontWeight: "normal" },
+    "EN SEGUIMIENTO": { color: "#1565C0", backgroundColor: "#BBDEFB", fontWeight: "bold" }, // Azul medio
+    "INTERESADO": { color: "#8C6E11", backgroundColor: "#FFECB3", fontWeight: "bold" }, // Amarillo suave
+    "NO INTERESADO": { color: "#B71C1C", backgroundColor: "#FFCDD2", fontWeight: "bold" }, // Rojo suave
+    "PROMESA DE PAGO": { color: "#2E7D32", backgroundColor: "#C8E6C9", fontWeight: "bold" }, // Verde suave
+    "FINALIZADO": { color: "#5E35B1", backgroundColor: "#D1C4E9", fontWeight: "bold" }, // Morado claro
   };
 
-  return styles[estado?.toUpperCase()] || { color: "rgba(224, 224, 224, 0.9)", backgroundColor: "rgba(224, 224, 224, 0.3)", fontWeight: "normal" };
+  return styles[estado?.toUpperCase()] || { color: "#616161", backgroundColor: "#E0E0E0", fontWeight: "bold" }; // Gris neutro más suave
 };
 
+
+// 🔹 Función para estilizar etiquetas de motivo
 const getMotivoStyle = (motivo) => {
   const styles = {
-    "MALA INFORMACIÓN": { color: "rgba(255, 152, 0, 0.9)", backgroundColor: "rgba(255, 235, 59, 0.3)", fontWeight: "normal" },
-    "ADMINISTRATIVO": { color: "rgba(33, 150, 243, 0.9)", backgroundColor: "rgba(33, 150, 243, 0.3)", fontWeight: "normal" },
-    "OLVIDO DE PAGO": { color: "rgba(244, 67, 54, 0.9)", backgroundColor: "rgba(244, 67, 54, 0.3)", fontWeight: "normal" },
-    "DESCONOCIDO": { color: "rgba(255, 152, 0, 0.9)", backgroundColor: "rgba(255, 152, 0, 0.3)", fontWeight: "normal" },
-    "ECONOMICO": { color: "rgba(76, 175, 80, 0.9)", backgroundColor: "rgba(76, 175, 80, 0.3)", fontWeight: "normal" },
+    "ECONOMICO": { color: "#D84315", backgroundColor: "#FFCCBC", fontWeight: "bold" }, // Naranja suave
+    "MALA INFORMACION": { color: "#6A1B9A", backgroundColor: "#E1BEE7", fontWeight: "bold" }, // Lila suave
+    "ADMINISTRATIVO": { color: "#795548", backgroundColor: "#D7CCC8", fontWeight: "bold" }, // Marrón suave
+    "OLVIDO DE PAGO": { color: "#8D6E63", backgroundColor: "#FFECB3", fontWeight: "bold" }, // Amarillo pastel
   };
 
-  return styles[motivo?.toUpperCase()] || { color: "rgba(224, 224, 224, 0.9)", backgroundColor: "rgba(224, 224, 224, 0.3)", fontWeight: "normal" };
+  return styles[motivo?.toUpperCase()] || { color: "#757575", backgroundColor: "#E0E0E0", fontWeight: "bold" }; // Gris neutro más suave
 };
+
 
 export const columnsClientes = (edit, conversacion) => [
   { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 150 },
@@ -45,6 +47,8 @@ export const columnsClientes = (edit, conversacion) => [
           color: getEstadoStyle(params.value).color,
           backgroundColor: getEstadoStyle(params.value).backgroundColor,
           fontWeight: "bold",
+          width: "120px", // Hace que todos tengan el mismo ancho
+          justifyContent: "center", // Centra el texto dentro del Chip
         }}
       />
     ),
@@ -53,7 +57,7 @@ export const columnsClientes = (edit, conversacion) => [
     field: "motivo",
     headerName: "Motivo",
     flex: 1,
-    minWidth: 100,
+    minWidth: 120,
     renderCell: (params) => (
       <Chip
         label={params.value}
@@ -61,44 +65,17 @@ export const columnsClientes = (edit, conversacion) => [
           color: getMotivoStyle(params.value).color,
           backgroundColor: getMotivoStyle(params.value).backgroundColor,
           fontWeight: "bold",
+          width: "120px", // Hace que todos tengan el mismo ancho
+          justifyContent: "center", // Centra el texto dentro del Chip
         }}
       />
     ),
   },
+  
+  
+  { field: "accion", headerName: "Acción Comercial", flex: 1, minWidth: 120 },
 
-  {
-    field: "accion",
-    headerName: "Acción Comercial",
-    flex: 1,
-    minWidth: 150,
-    renderCell: (params) => (
-      <Chip
-        label={params.value || "Sin acción"} // Si es null, mostrar "Sin acción"
-        sx={{
-          backgroundColor: params.value ? "#FFF9C4" : "#E0E0E0", // Amarillo claro si hay acción, gris si no
-          color: "black",
-          fontWeight: "bold",
-        }}
-      />
-    ),
-  },
-
-  {
-    field: "gestor",
-    headerName: "Gestor",
-    flex: 1,
-    minWidth: 150,
-    renderCell: (params) => (
-      <Chip
-        label={params.value || "Sin asignar"} // Si es null, mostrar "Sin gestor asignado"
-        sx={{
-          backgroundColor: params.value ? "#B3E5FC" : "#E0E0E0", // Azul claro si hay gestor, gris si no
-          color: "black",
-          fontWeight: "bold",
-        }}
-      />
-    ),
-  },
+  { field: "gestor", headerName: "Gestor", flex: 1, minWidth: 120 },
 
   {
     field: "acciones",

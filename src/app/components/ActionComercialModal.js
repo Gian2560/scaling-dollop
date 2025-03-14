@@ -75,7 +75,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                 bloquearEstado = false;
             }
 
-            setClienteData((prev) => ({ ...prev, accion: value, estado: nuevoEstado }));
+            setClienteData((prev) => ({ ...prev, accion: value }));
             setEstadoEditable(!bloquearEstado);
             setMostrarFechaPromesa(mostrarFecha);
         } else {
@@ -128,7 +128,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                     </Select>
                 </FormControl>
 
-                <FormControl fullWidth margin="dense">
+                {/*<FormControl fullWidth margin="dense">
                     <InputLabel>Estado</InputLabel>
                     <Select name="estado" value={clienteData.estado} onChange={handleChange} disabled={!estadoEditable}>
                         <MenuItem value="">Seleccionar estado</MenuItem>
@@ -138,7 +138,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                         <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
                         <MenuItem value="Finalizado">Finalizado</MenuItem>
                     </Select>
-                </FormControl>
+                </FormControl>*/}
 
                 {mostrarFechaPromesa && (
                     <LocalizationProvider dateAdapter={AdapterDayjs}>

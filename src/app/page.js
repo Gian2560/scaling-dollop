@@ -57,7 +57,7 @@ export default async function Home() {
       </section>
 
       {/* Estadísticas Rápidas */}
-      <section className="bg-gray-200 py-16 text-center">
+      {/*<section className="bg-gray-200 py-16 text-center">
         <h2 className="text-3xl font-bold text-[#254e59] mb-10">
           Estadísticas de Reactivaciones
         </h2>
@@ -75,7 +75,7 @@ export default async function Home() {
             <p className="text-3xl font-bold text-gray-800 mt-2">+1,500</p>
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* CTA Final */}
       <section className="bg-[#007391] text-white text-center py-16">

@@ -245,3 +245,10 @@ model usuario {
 
   @@index([rol_id], map: "rol_id")
 }
+
+model notificaciones {
+  id_notificacion Int       @id @default(autoincrement())
+  cliente_id      Int?
+  mensaje         String?   @db.Text
+  fecha           DateTime? @default(now()) @db.Timestamp(0)
+}

@@ -7,38 +7,50 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState([]); // Cola de notificaciones
+  const [ultimaFecha, setUltimaFecha] = useState(null); // Última notificación recibida
   const router = useRouter();
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/notificaciones");
+    const fetchNotificaciones = async () => {
+      try {
+        const res = await fetch("/api/notificaciones"); // Polling cada 10 segundos
+        if (!res.ok) throw new Error("Error al obtener notificaciones");
+        const data = await res.json();
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+        if (data.length > 0) {
+          // Filtrar solo las notificaciones NUEVAS
+          const nuevasNotificaciones = data.filter(
+            (notif) => !ultimaFecha || new Date(notif.fecha) > new Date(ultimaFecha)
+          );
 
-      setNotificaciones((prev) => {
-        // Limitar a un máximo de 5 notificaciones en la cola
-        const nuevasNotificaciones = [...prev, data].slice(-5);
-        return nuevasNotificaciones;
-      });
+          if (nuevasNotificaciones.length > 0) {
+            setNotificaciones((prev) => [...prev, ...nuevasNotificaciones].slice(-5)); // Máximo 5 notificaciones
+            setUltimaFecha(nuevasNotificaciones[nuevasNotificaciones.length - 1].fecha); // Guardar última fecha
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error en polling de notificaciones:", error);
+      }
     };
 
-    eventSource.onerror = () => {
-      console.error("❌ Error en la conexión SSE.");
-      eventSource.close();
-    };
+    fetchNotificaciones(); // Primera carga
+    const interval = setInterval(fetchNotificaciones, 10000); // Polling cada 10s
 
-    return () => {
-      eventSource.close();
-    };
-  }, []);
+    return () => clearInterval(interval); // Limpieza al desmontar
+  }, [ultimaFecha]);
 
-  const handleClose = (index) => {
-    setNotificaciones((prev) => prev.filter((_, i) => i !== index));
-  };
+  // Función para eliminar automáticamente la notificación más antigua
+  useEffect(() => {
+    if (notificaciones.length > 0) {
+      const timer = setTimeout(() => {
+        setNotificaciones((prev) => prev.slice(1)); // Elimina la más antigua
+      }, 5000); // Se elimina después de 5s
+      return () => clearTimeout(timer);
+    }
+  }, [notificaciones]);
 
-  const handleClick = (url, index) => {
-    router.push(url);
-    handleClose(index);
+  const handleClick = (url) => {
+    if (url) router.push(url);
   };
 
   const handleRedirectToAvisos = () => {
@@ -59,13 +71,13 @@ export default function Notificaciones() {
           key={index}
           open={true}
           autoHideDuration={5000}
-          onClose={() => handleClose(index)}
+          onClose={() => setNotificaciones((prev) => prev.filter((_, i) => i !== index))}
           anchorOrigin={{ vertical: "top", horizontal: "right" }} // Posición en la pantalla
-          style={{ top: `${index * 60}px` }} // 🔹 Apila notificaciones dinámicamente
+          style={{ top: `${index * 60}px`, transition: "top 0.5s ease-in-out" }} // 🔹 Apila dinámicamente
         >
           <Alert
             severity="info"
-            onClick={() => handleClick(noti.url, index)}
+            onClick={() => handleClick(noti.url)}
             style={{ cursor: "pointer" }}
           >
             {noti.mensaje}

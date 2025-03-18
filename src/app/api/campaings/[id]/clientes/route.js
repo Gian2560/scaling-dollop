@@ -7,10 +7,27 @@ export async function GET(req, { params }) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
 
-    const total = await prisma.cliente_campanha.count({
+    // Obtener la campaña con detalles
+    const campanha = await prisma.campanha.findUnique({
+      where: { campanha_id: Number(params.id) },
+      include: {
+        template: { select: { nombre_template: true, mensaje: true } }, // Template
+      },
+    });
+
+    if (!campanha) {
+      return new Response(JSON.stringify({ error: "Campaña no encontrada" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Contar total de clientes en la campaña
+    const totalClientes = await prisma.cliente_campanha.count({
       where: { campanha_id: parseInt(params.id) },
     });
 
+    // Obtener clientes paginados
     const clientes = await prisma.cliente_campanha.findMany({
       where: { campanha_id: parseInt(params.id) },
       include: { cliente: true },
@@ -18,16 +35,48 @@ export async function GET(req, { params }) {
       take: pageSize,
     });
 
-    return NextResponse.json({
+    // Formatear la respuesta
+    const response = {
+      campanha_id: campanha.campanha_id,
+      nombre_campanha: campanha.nombre_campanha,
+      descripcion: campanha.descripcion || "Sin descripción",
+      fecha_creacion: campanha.fecha_creacion,
+      fecha_fin: campanha.fecha_fin,
+      estado_campanha: campanha.estado_campanha || "Desconocido",
+      mensaje_cliente: campanha.mensaje_cliente || "No definido",
+      num_clientes: totalClientes, // ✅ Total de clientes
+      template: campanha.template
+        ? {
+            nombre_template: campanha.template.nombre_template,
+            mensaje: campanha.template.mensaje,
+          }
+        : { nombre_template: "No asignado", mensaje: "No definido" },
       clientes: clientes.map((c) => ({
-        id: c.cliente.cliente_id, // ✅ Asegura que cada cliente tenga un `id`
-        ...c.cliente, // 🔹 Copia los demás atributos del cliente
+        id: c.cliente.cliente_id, // ✅ ID único del cliente
+        nombre: c.cliente.nombre,
+        celular: c.cliente.celular,
+        email: c.cliente.email,
+        estado: c.cliente.estado,
+        fecha_ultima_interaccion: c.cliente.fecha_ultima_interaccion,
       })),
-      total,
+      pagination: {
+        total: totalClientes,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalClientes / pageSize),
+      },
+    };
+
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("❌ Error en la API de clientes de campaña:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("❌ Error en la API de campañas:", error);
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 

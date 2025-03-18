@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useCampaignDetail from "@/hooks/useCampaignDetail";
 import {
-  Box, Typography, Button, CircularProgress, Alert,
-  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableHead, TableRow, TableCell, TableBody, Paper, Divider
+  Box, Typography, Button, CircularProgress, Alert, Dialog, DialogTitle, 
+  DialogContent, DialogActions, Table, TableHead, TableRow, TableCell, TableBody, 
+  Card, CardContent, Divider, IconButton
 } from "@mui/material";
 import CustomDataGrid from "@/app/components/CustomDataGrid";
 import * as XLSX from "xlsx";
-import { ArrowBack, UploadFile, Send } from "@mui/icons-material"; // Iconos de Material UI
+import { ArrowBack, UploadFile, Send, Delete } from "@mui/icons-material"; 
 
 const CampaignDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const campaignId = params?.id;
-
+  
   const [openModal, setOpenModal] = useState(false);
   const [file, setFile] = useState(null);
   const [clients, setClients] = useState([]);
-  const [loadingUpload, setLoadingUpload] = useState(false); // Estado para controlar el spinner
+  const [loadingUpload, setLoadingUpload] = useState(false);
   const fileInputRef = useRef(null);
 
   const {
@@ -40,6 +41,7 @@ const CampaignDetailPage = () => {
     if (campaignId) {
       fetchCampaignDetail();
     }
+    console.log("camapla",campaign);
   }, [campaignId]);
 
   const handleFileUpload = (event) => {
@@ -68,90 +70,83 @@ const CampaignDetailPage = () => {
 
   const handleSaveClients = async () => {
     if (!file) return;
-    setLoadingUpload(true); // Activar el estado de carga
+    setLoadingUpload(true);
     await handleUploadClients(file);
     setOpenModal(false);
     setFile(null);
     setClients([]);
     fetchCampaignDetail();
-    setLoadingUpload(false); // Desactivar el estado de carga
+    setLoadingUpload(false);
   };
 
   return (
     <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%">
       {loading ? (
-        <CircularProgress />
+        <Box display="flex" justifyContent="center" alignItems="center" height="60vh">
+          <CircularProgress color="primary" />
+        </Box>
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          <Typography variant="h4" sx={{ fontWeight: "bold", color: "#333" }}>
-            Detalle de Campaña: {campaign?.nombre_campanha}
-          </Typography>
+          {/* 🔹 ENCABEZADO */}
+          <Box textAlign="center" mb={3} p={2} sx={{ bgcolor: "#007391", color: "white", borderRadius: 2 }}>
+            <Typography variant="h4" fontWeight="bold">📢 {campaign?.nombre_campanha}</Typography>
+          </Box>
 
-          <Paper sx={{ p: 3, mt: 2, mb: 3, backgroundColor: "#f9f9f9" }}>
-            <Typography variant="subtitle1"><strong>Descripción:</strong> {campaign?.descripcion || "Sin descripción"}</Typography>
-            <Typography variant="subtitle1"><strong>Fecha Creación:</strong> {campaign?.fecha_creacion ? new Date(campaign.fecha_creacion).toLocaleDateString() : "N/A"}</Typography>
-            <Typography variant="subtitle1"><strong>Fecha Fin:</strong> {campaign?.fecha_fin ? new Date(campaign.fecha_fin).toLocaleDateString() : "No definida"}</Typography>
-            <Typography variant="subtitle1"><strong>Estado:</strong> {campaign?.estado_campanha || "Desconocido"}</Typography>
-            <Typography variant="subtitle1"><strong>Número de Clientes:</strong> {pagination.total}</Typography>
-            <Typography variant="subtitle1"><strong>Template:</strong> {campaign?.template?.nombre_template || "No asignado"}</Typography>
-          </Paper>
+          {/* 🔹 INFORMACIÓN DE LA CAMPAÑA */}
+          <Card sx={{ bgcolor: "white", boxShadow: 2, mt: 2, p: 2 }}>
+            <CardContent>
+              <Typography variant="h6" color="#007391">📋 Información de la Campaña</Typography>
+              <Divider sx={{ my: 1, backgroundColor: "#005c6b" }} />
+              <Typography><strong>📄 Descripción:</strong> {campaign?.descripcion || "Sin descripción"}</Typography>
+              <Typography><strong>📅 Fecha de Creación:</strong> {campaign?.fecha_creacion ? new Date(campaign.fecha_creacion).toLocaleDateString() : "N/A"}</Typography>
+              <Typography><strong>⏳ Fecha Fin:</strong> {campaign?.fecha_fin ? new Date(campaign.fecha_fin).toLocaleDateString() : "No definida"}</Typography>
+              <Typography><strong>🔘 Estado:</strong> {campaign?.estado_campanha || "Desconocido"}</Typography>
+              <Typography><strong>👥 Número de Clientes:</strong> {pagination.total}</Typography>
+              <Typography><strong>📝 Template:</strong> {campaign?.template?.nombre_template || "No asignado"}</Typography>
+              <Typography><strong>📝 Mensaje:</strong> {campaign?.template?.mensaje || "No definido"}</Typography>
+            </CardContent>
+          </Card>
 
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 3 }} />
 
+          {/* 🔹 BOTONES DE ACCIÓN */}
           <Box display="flex" justifyContent="space-between" my={2}>
             <Button
               variant="contained"
-              color="secondary"
               onClick={() => router.push("/campaigns")}
-              sx={{
-                backgroundColor: "#254e59", 
-                "&:hover": {
-                  backgroundColor: "#1a363d", 
-                },
-              }}
+              sx={{ backgroundColor: "#254e59", "&:hover": { backgroundColor: "#1a363d" } }}
               startIcon={<ArrowBack />}
             >
               Volver
             </Button>
             <Button
               variant="contained"
-              color="primary"
               onClick={() => setOpenModal(true)}
-              sx={{
-                backgroundColor: "#007391", 
-                "&:hover": {
-                  backgroundColor: "#005c6b", 
-                },
-              }}
+              sx={{ backgroundColor: "#007391", "&:hover": { backgroundColor: "#005c6b" } }}
               startIcon={<UploadFile />}
             >
               Subir Clientes desde Excel
             </Button>
             <Button
               variant="contained"
-              color="success"
               onClick={handleSendCampaign}
-              sx={{
-                backgroundColor: "#388e3c", 
-                "&:hover": {
-                  backgroundColor: "#00600f", 
-                },
-              }}
+              sx={{ backgroundColor: "#388e3c", "&:hover": { backgroundColor: "#00600f" } }}
               startIcon={<Send />}
             >
               Enviar Mensajes
             </Button>
           </Box>
 
+          {/* 🔹 TABLA DE CLIENTES */}
           <CustomDataGrid
             pagination={pagination}
             setPagination={setPagination}
             rows={campaignClients}
             totalRows={pagination.total}
             columns={[
-              { field: "cliente_id", headerName: "ID Cliente", flex: 1 },
+              { field: "id", headerName: "ID Cliente", flex: 1 },
               { field: "nombre", headerName: "Nombre", flex: 1 },
               { field: "celular", headerName: "Celular", flex: 1 },
               {
@@ -159,51 +154,22 @@ const CampaignDetailPage = () => {
                 headerName: "Acciones",
                 flex: 1,
                 renderCell: (params) => (
-                  <Button
-                    variant="contained"
-                    color="error"
+                  <IconButton
                     onClick={() => handleRemoveClient(params.row.cliente_id)}
-                    sx={{
-                      backgroundColor: "#D32F2F", 
-                      "&:hover": {
-                        backgroundColor: "#9A0007", 
-                      },
-                    }}
+                    sx={{ color: "#D32F2F" }}
                   >
-                    Eliminar
-                  </Button>
+                    <Delete />
+                  </IconButton>
                 ),
               },
             ]}
           />
 
+          {/* 🔹 MODAL DE CARGA DE CLIENTES */}
           <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="md" fullWidth>
             <DialogTitle>Subir Clientes desde Excel</DialogTitle>
             <DialogContent>
               <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
-              {clients.length > 0 && (
-                <>
-                  <Typography variant="h6" mt={2}>Vista Previa de Clientes</Typography>
-                  <Box sx={{ maxHeight: 200, overflowY: "auto", border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Número</TableCell>
-                          <TableCell>Nombre</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {clients.map((client) => (
-                          <TableRow key={client.id}>
-                            <TableCell>{client.numero}</TableCell>
-                            <TableCell>{client.nombre}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Box>
-                </>
-              )}
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setOpenModal(false)} color="primary">Cerrar</Button>
@@ -217,22 +183,13 @@ const CampaignDetailPage = () => {
 
           {snackbar}
 
-          {/* Spinner con overlay oscuro */}
+          {/* 🔹 SPINNER DE CARGA */}
           {loadingUpload && (
-            <Box
-              sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                backgroundColor: "rgba(0, 0, 0, 0.5)", // Fondo oscuro
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 9999, // Asegura que esté por encima de otros componentes
-              }}
-            >
+            <Box sx={{
+              position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex",
+              justifyContent: "center", alignItems: "center", zIndex: 9999,
+            }}>
               <CircularProgress size={60} color="primary" />
             </Box>
           )}

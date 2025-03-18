@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import {
-  getCampaignById,
-  removeClientFromCampaign,
-  uploadClients, sendCampaignMessages
+import { 
+  getCampaignById, 
+  removeClientFromCampaign, 
+  uploadClients, 
+  sendCampaignMessages 
 } from "../../services/campaignService";
-import { Snackbar, Alert } from "@mui/material"; // Importamos Snackbar y Alert
+import { Snackbar, Alert } from "@mui/material"; 
 
 const useCampaignDetail = (id) => {
   const [campaign, setCampaign] = useState(null);
@@ -14,37 +15,44 @@ const useCampaignDetail = (id) => {
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0 });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "success" o "error"
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const fetchCampaignDetail = async () => {
     setLoading(true);
     try {
-      const { clientes, total } = await getCampaignById(id, pagination.page, pagination.pageSize);
-      setCampaign(clientes);
+      const { campanha_id, nombre_campanha, fecha_creacion, fecha_fin, estado_campanha, 
+              mensaje_cliente, template, clientes, pagination: pagData } = await getCampaignById(id, pagination.page, pagination.pageSize);
+
+      // Actualiza la información de la campaña
+      setCampaign({
+        campanha_id,
+        nombre_campanha,
+        fecha_creacion,
+        fecha_fin,
+        estado_campanha,
+        mensaje_cliente,
+        template
+      });
+
+      // Actualiza la lista de clientes y la paginación
       setClients(clientes);
-      setPagination((prev) => ({ ...prev, total }));
+      setPagination((prev) => ({
+        ...prev,
+        total: pagData.total,
+        page: pagData.page,
+        pageSize: pagData.pageSize,
+      }));
+
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-  const handleSendCampaign = async () => {
-    try {
-      await sendCampaignMessages(id);
-      setSnackbarMessage("Mensajes enviados correctamente!"); // Mensaje de éxito
-      setSnackbarSeverity("success"); // Establecemos el tipo de alerta como "success"
-      setSnackbarOpen(true); // Abrimos el Snackbar
-    } catch (err) {
-      console.error("❌ Error al enviar campaña:", err);
-      setSnackbarMessage("Hubo un error al enviar los mensajes."); // Mensaje de error
-      setSnackbarSeverity("error"); // Establecemos el tipo de alerta como "error"
-      setSnackbarOpen(true); // Abrimos el Snackbar
-    }
-  };
 
   useEffect(() => {
     fetchCampaignDetail();
+    console.log("clientes",clients)
   }, [id, pagination.page, pagination.pageSize]);
 
   return {
@@ -67,13 +75,23 @@ const useCampaignDetail = (id) => {
       await uploadClients(id, file);
       fetchCampaignDetail();
     },
-    handleSendCampaign,
-
+    handleSendCampaign: async () => {
+      try {
+        await sendCampaignMessages(id);
+        setSnackbarMessage("Mensajes enviados correctamente!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+      } catch (err) {
+        setSnackbarMessage("Hubo un error al enviar los mensajes.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      }
+    },
     snackbar: (
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000} // Se cierra automáticamente después de 6 segundos
-        onClose={() => setSnackbarOpen(false)} // Cerramos el Snackbar cuando termine
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={6000} 
+        onClose={() => setSnackbarOpen(false)}
       >
         <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%" }}>
           {snackbarMessage}

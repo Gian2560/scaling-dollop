@@ -15,7 +15,7 @@ const useReporte = () => {
   useEffect(() => {
     fetchEstadosData();
   }, [startDate, endDate, pagination, sortModel]);
-
+  
   const fetchEstadosData = async () => {
     setLoading(true);
     setError(null);
@@ -27,14 +27,14 @@ const useReporte = () => {
         pagination.pageSize,
         sortModel
       );
-
+  
       console.log("🔹 Datos recibidos:", data);
-
+  
       if (!data || !data.estados) {
         throw new Error("Datos de API vacíos o incorrectos");
       }
-
-      setEstadosData(data.estados);
+  
+      setEstadosData(data.estados); // Asegúrate de que el estado esté siendo actualizado
       setTotalEstadosData(data.totalLeads);
     } catch (err) {
       console.error("Error al obtener reporte:", err);
@@ -44,14 +44,27 @@ const useReporte = () => {
     }
   };
 
-  const reporteConPorcentajes = useMemo(() => {
-    if (!estadosData.length || totalEstadosData === 0) return [];
+  console.log("🔹 estadosData en el hook:", estadosData);
 
-    return estadosData.map((estado) => {
+  const reporteConPorcentajes = useMemo(() => {
+    if (!estadosData || totalEstadosData === 0) return [];
+  
+    // Usamos Object.entries para recorrer el objeto
+    return Object.entries(estadosData).map(([estado, datos]) => {
+      // Cálculo del porcentaje usando datos.total y totalEstadosData
+      const porcentaje = (totalEstadosData > 0 && datos.total > 0)
+        ? ((datos.total / totalEstadosData) * 100).toFixed(2)
+        : "0";
+
       return {
-        ...estado,
-        estadoPorcentaje: estado.estado_porcentaje || "0",
-        acciones: estado.acciones || {},
+        id: estado,  // Usamos el nombre del estado como id
+        estado,
+        estadoPorcentaje: porcentaje,  // Calculamos el porcentaje correctamente
+        total: datos.total,
+        converge: datos.converge,
+        recencia: datos.recencia,
+        intensity: datos.intensity,
+        accion: datos.accion, // Acciones (vacías por ahora)
       };
     });
   }, [estadosData, totalEstadosData]);

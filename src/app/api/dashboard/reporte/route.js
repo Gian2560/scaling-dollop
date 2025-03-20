@@ -45,25 +45,71 @@ export async function GET(request) {
 
         // Si no hay datos, no continuar con el procesamiento de este estado
         if (totalEstado === 0) {
-          return { estado, data: null };
+          return { estado, data: { total: 0, converge: "0.00", recencia: "0.00", intensity: "0.00", accion: {} } };
         }
+        
 
         // Porcentaje de clientes contactados (Converge)
         const contactados = await prisma.cliente.count({
           where: {
             ...fechaFilter,
             estado,
-            gestor: {
-              not: "",
-            },
           },
         });
         const converge = totalEstado > 0 ? (contactados / totalEstado) * 100 : 0;
         console.log(`Converge en estado "${estado}":`, converge);
 
         // Generar valores aleatorios para recencia e intensity (por ahora simulados)
-        const recencia = (Math.random() * 30).toFixed(2);  // Simulando un valor de recencia entre 0 y 30 días
-        const intensity = (Math.random() * 10).toFixed(2);  // Simulando el número de intentos (entre 0 y 10)
+        const recenciaData = await prisma.$queryRaw`
+          SELECT AVG(DATEDIFF(fecha_ultima_interaccion, fecha_creacion)) AS promedio_recencia
+          FROM cliente
+          WHERE estado = ${estado} AND fecha_creacion >= ${fechaInicio} AND fecha_creacion <= ${fechaFin}
+        `;
+        const promedioRecencia = recenciaData[0]?.promedio_recencia || 0;
+
+        const actionsPerClient = await prisma.accion_comercial.groupBy({
+          by: ['cliente_id'],  // Agrupamos por cliente
+          _count: {
+            accion_comercial_id: true,  // Contamos la cantidad de acciones por cliente
+          },
+          where: {
+            cliente: {
+              ...fechaFilter,
+              estado,  // Filtro por estado
+            },
+          },
+        });
+        
+        // Calculamos el total de acciones y el número de clientes
+        const totalActions = actionsPerClient.reduce((acc, item) => acc + item._count.accion_comercial_id, 0);
+        const averageActions = actionsPerClient.length > 0 ? (totalActions / actionsPerClient.length) : 0;
+        
+        console.log('Promedio de acciones (intensity)', averageActions);
+
+        const acciones = await prisma.cliente.groupBy({
+          by: ['accion'],  // Agrupamos por el campo 'accion' en la tabla cliente
+          _count: {
+            cliente_id: true,  // Contamos la cantidad de clientes con cada tipo de acción
+          },
+          where: {
+            ...fechaFilter,  // Filtro por el rango de fechas proporcionado
+            accion: {
+              not: "",  // Filtramos por acciones no vacías
+            },
+            estado: 
+              estado
+            
+          },
+        });
+         
+        // Aseguramos que 'acciones' sea un arreglo vacío si no hay resultados
+        console.log("acciones", acciones);
+        
+        const accionesData = acciones.reduce((acc, item) => {
+          acc[item.accion] = item._count.cliente_id;
+          return acc;
+        }, {});
+        
 
         // Construcción del objeto de datos para este estado
         return {
@@ -71,9 +117,9 @@ export async function GET(request) {
           data: {
             total: totalEstado,
             converge: converge.toFixed(2),
-            recencia,  // Simulación de recencia
-            intensity, // Simulación de intensity
-            accion: {}, // Aquí podrías agregar las acciones si quieres, pero las dejamos vacías por ahora
+            recencia: promedioRecencia.toFixed(2),  // Simulación de recencia
+            intensity: averageActions.toFixed(2),            
+            accion: accionesData, // Aquí podrías agregar las acciones si quieres, pero las dejamos vacías por ahora
           }
         };
       })

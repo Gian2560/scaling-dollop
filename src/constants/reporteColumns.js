@@ -12,17 +12,11 @@ const stateMapping = {
   default: { text: "Desconocido", color: grey[100], textColor: grey[800] },
 };
 
-// 🔹 Mapeo de acciones con colores
+// 🔹 Mapeo de acciones con colores (modificado según las acciones que mencionaste)
 const actionMapping = {
-  "llamada": { text: "Llamada", color: orange[100], textColor: orange[800] },
-  "whatsapp": { text: "WhatsApp", color: green[100], textColor: green[800] },
-  "email": { text: "Email", color: blue[100], textColor: blue[800] },
-  "seguimiento": { text: "Seguimiento", color: blue[200], textColor: blue[900] },
-  "cita_agendada": { text: "Cita Agendada", color: green[200], textColor: green[900] },
-  "cerrado": { text: "Cerrado", color: green[300], textColor: green[900] },
-  "sin_respuesta": { text: "Sin Respuesta", color: red[200], textColor: red[800] },
-  "atendio_otro_lugar": { text: "Atendió en Otro Lugar", color: orange[200], textColor: orange[900] },
-  "volver_contactar": { text: "Volver a Contactar", color: blue[300], textColor: blue[900] },
+  "No interesado": { text: "No Interesado", color: red[100], textColor: red[800] },
+  "Volver a contactar": { text: "Volver a Contactar", color: blue[300], textColor: blue[900] },
+  "Promesa de Pago": { text: "Promesa de Pago", color: orange[100], textColor: orange[800] },
   default: { text: "Sin Acción", color: grey[100], textColor: grey[800] },
 };
 
@@ -56,7 +50,6 @@ export const REPORTE_COLUMNS = () => [
       );
     },
   },
-  ,
   {
     field: "converge",
     headerName: "Cobertura (%)",
@@ -74,25 +67,29 @@ export const REPORTE_COLUMNS = () => [
     width: 130,
   },
   {
-    field: "acciones",
+    field: "accion",
     headerName: "Acciones",
     width: 350,
     renderCell: (params) => {
-      // Asegurarse de que `params.row.acciones` no sea null o undefined
-      const acciones = params.row.acciones || {}; // Asigna un objeto vacío si no existe
+      const acciones = params.row.accion || {}; // Asegura que no sea null ni undefined
       return (
         <>
-          {Object.entries(acciones).map(([accion, data]) => {
-            const actionInfo = getActionInfo(accion);
+          {/* Recorremos cada acción en el objeto */}
+          {Object.entries(acciones).map(([accion, count]) => {
+            // Limpiamos el nombre de la acción, eliminando "Cambio de acción a: "
+            const cleanedAccion = accion.replace("Cambio de acción a: ", "");
+            const actionInfo = getActionInfo(cleanedAccion);
+            
             return (
               <Chip
                 key={accion}
-                label={`${actionInfo.text}: ${data.count} - ${data.percentage}%`}
+                label={`${actionInfo.text}: ${count} - ${(count / params.row.total * 100).toFixed(2)}%`}
                 sx={{
                   backgroundColor: actionInfo.color,
                   color: actionInfo.textColor,
                   fontWeight: "normal",
                   m: 0.5,
+                  display: "flex", // Asegura que cada chip se muestre en una nueva línea
                 }}
               />
             );
@@ -101,9 +98,6 @@ export const REPORTE_COLUMNS = () => [
       );
     },
   }
-  ,
+  
 ];
 
-
-// Exportamos las funciones para usarlas en otros componentes si es necesario
-export { getStateInfo, getActionInfo };

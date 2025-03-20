@@ -22,6 +22,10 @@ export default function CustomDataGrid({ rows, columns, totalRows, pagination, s
         sortModel={sortModel}
         onSortModelChange={setSortModel}
         autoHeight
+        getRowHeight={(params) => {
+          // Esto permite que el alto de la fila se ajuste según el contenido
+          return 'auto'; // O puedes calcular una altura basada en el contenido
+        }}
       />
     </div>
   );

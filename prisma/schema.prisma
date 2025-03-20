@@ -187,6 +187,13 @@ model leadh {
   @@index([cliente_id], map: "cliente_id")
 }
 
+model notificaciones {
+  id_notificacion Int       @id @default(autoincrement())
+  cliente_id      Int?
+  mensaje         String?   @db.Text
+  fecha           DateTime? @default(now()) @db.Timestamp(0)
+}
+
 model pago {
   pago_id          Int                @id @default(autoincrement())
   cliente_id       Int
@@ -244,11 +251,4 @@ model usuario {
   rol        rol?     @relation(fields: [rol_id], references: [rol_id], onUpdate: NoAction, map: "usuario_ibfk_1")
 
   @@index([rol_id], map: "rol_id")
-}
-
-model notificaciones {
-  id_notificacion Int       @id @default(autoincrement())
-  cliente_id      Int?
-  mensaje         String?   @db.Text
-  fecha           DateTime? @default(now()) @db.Timestamp(0)
 }

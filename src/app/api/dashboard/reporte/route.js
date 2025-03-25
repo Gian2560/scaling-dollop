@@ -24,7 +24,7 @@ export async function GET(request) {
 
     // Definir los estados para consulta
     const estados = [
-      "interesado", "promesa de pago", "no interesado", "finalizado", "en seguimiento"
+      "en seguimiento","interesado", "no interesado","promesa de pago",  "finalizado", 
     ];
 
     // Objeto para almacenar los datos por estado

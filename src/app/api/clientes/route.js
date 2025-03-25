@@ -27,8 +27,9 @@ export async function GET(req) {
 
     if (search) {
       filtros.OR = [
-        { nombre: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { nombre: { contains: search } },
+        { email: { contains: search} },
+        {celular: {contains: search}},
       ];
     }
 
@@ -41,7 +42,7 @@ export async function GET(req) {
     }
 
     if (fechaInicio && fechaFin) {
-      filtros.fecha_creacion = {
+      filtros.fecha_ultima_interaccion_bot = {
         gte: fechaInicio, // Mayor o igual a la fecha de inicio
         lte: fechaFin, // Menor o igual a la fecha de fin
       };

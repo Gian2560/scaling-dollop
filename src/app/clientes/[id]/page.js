@@ -79,13 +79,13 @@ export default function ClienteDetallePage() {
 
           <Card sx={{ bgcolor: "white", boxShadow: 2, mt: 2 }}>
             <CardContent>
-              <Typography sx={{ color: "#007391", fontWeight: "bold" }}>🆔 Documento de Identidad:</Typography>
-              <Typography>{cliente.documento_identidad || "No registrado"}</Typography>
+              <Typography sx={{ color: "#007391", fontWeight: "bold" }}>📞 Numero de celular:</Typography>
+              <Typography>{cliente.celular|| "No registrado"}</Typography>
 
               <Divider sx={{ my: 1 }} />
 
               <Typography sx={{ color: "#007391", fontWeight: "bold" }}>🤖 Última Interacción con el Bot:</Typography>
-              <Typography>{cliente.ultima_interaccion_bot || "No disponible"}</Typography>
+              <Typography>{cliente.fecha_ultima_interaccion_bot || "No disponible"}</Typography>
 
               <Divider sx={{ my: 1 }} />
 

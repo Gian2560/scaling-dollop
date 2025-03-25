@@ -21,6 +21,7 @@ export function useClienteDetalle(clienteId) {
     try {
       const data = await fetchClienteById(id);
       setCliente(data);
+      console.log("lientetet",data);
     } catch (err) {
       console.error("Error cargando el detalle del cliente:", err);
       setError("No se pudo cargar la información.");

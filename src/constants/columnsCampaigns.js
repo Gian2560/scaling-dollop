@@ -1,6 +1,9 @@
 import ActionButton from "@/app/components/ActionButton";
 import { useRouter } from "next/navigation";
 import { Box } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
   {
@@ -14,7 +17,9 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
         textAlign: 'center', 
         padding: '8px', 
         fontWeight: 'bold', 
-        color: '#254e59'
+        color: '#254e59',
+        backgroundColor: '#f1f8e9', // Fondo sutil
+        borderRadius: '4px',
       }}>
         {params.value}
       </Box>
@@ -28,7 +33,12 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
       <Box sx={{
         textAlign: 'center', 
         padding: '8px', 
-        color: '#333'
+        color: '#333',
+        backgroundColor: '#ffffff',
+        borderRadius: '4px',
+        '&:hover': {
+          backgroundColor: '#f4f4f4',
+        },
       }}>
         {params.value}
       </Box>
@@ -42,7 +52,12 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
       <Box sx={{
         textAlign: 'center', 
         padding: '8px', 
-        color: '#333'
+        color: '#333',
+        backgroundColor: '#ffffff',
+        borderRadius: '4px',
+        '&:hover': {
+          backgroundColor: '#f4f4f4',
+        },
       }}>
         {params.value}
       </Box>
@@ -57,7 +72,9 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
         textAlign: 'center', 
         padding: '8px', 
         fontWeight: 'bold', 
-        color: '#388e3c'
+        color: '#388e3c',
+        backgroundColor: '#e8f5e9', // Fondo verde sutil
+        borderRadius: '4px',
       }}>
         {params.value}
       </Box>
@@ -71,7 +88,12 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
       <Box sx={{
         textAlign: 'center', 
         padding: '8px', 
-        color: '#333'
+        color: '#333',
+        backgroundColor: '#ffffff',
+        borderRadius: '4px',
+        '&:hover': {
+          backgroundColor: '#f4f4f4',
+        },
       }}>
         {params.value}
       </Box>
@@ -80,7 +102,7 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
   {
     field: "acciones",
     headerName: "Acciones",
-    width: 150,
+    width: 180,
     renderCell: (params) => {
       const router = useRouter();
       return (
@@ -95,9 +117,12 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
                 "&:hover": { backgroundColor: "#005c6b" }, 
                 color: "#fff",
                 padding: "6px 12px",
-                borderRadius: "4px",
-                marginRight: "8px"
+                borderRadius: "8px", // Bordes redondeados
+                marginRight: "8px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)", // Sombra sutil
+                transition: "all 0.3s ease-in-out",
               },
+              icon: <EditIcon sx={{ color: "#fff" }} />,
             },
             {
               label: "Detalle",
@@ -108,9 +133,12 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
                 "&:hover": { backgroundColor: "#00600f" }, 
                 color: "#fff",
                 padding: "6px 12px",
-                borderRadius: "4px",
-                marginRight: "8px"
+                borderRadius: "8px",
+                marginRight: "8px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                transition: "all 0.3s ease-in-out",
               },
+              icon: <VisibilityIcon sx={{ color: "#fff" }} />,
             },
             {
               label: "Eliminar",
@@ -121,13 +149,15 @@ export const CAMPAIGN_COLUMNS = (onEdit, onDelete) => [
                 "&:hover": { backgroundColor: "#9A0007" }, 
                 color: "#fff",
                 padding: "6px 12px",
-                borderRadius: "4px"
+                borderRadius: "8px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                transition: "all 0.3s ease-in-out",
               },
+              icon: <DeleteIcon sx={{ color: "#fff" }} />,
             },
           ]}
         />
       );
     },
-    
   },
 ];

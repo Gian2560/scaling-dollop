@@ -61,6 +61,8 @@ body {
   50% { transform: scale(1.2) rotate(-180deg); }
 }
 
+
+
 /* Aplicando animaciones */
 .animate-moveStars {
   animation: moveStars 60s linear infinite;

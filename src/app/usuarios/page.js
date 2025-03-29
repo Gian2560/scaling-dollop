@@ -190,12 +190,26 @@ export default function UsuariosPage() {
         }}
       >
         <DataGrid
-          rows={usuarios}
-          columns={columns}
-          pageSize={10}
-          loading={loading}
-          getRowId={(row) => row.usuario_id}
-        />
+  rows={usuarios}
+  columns={columns}
+  pageSize={10}
+  loading={loading}
+  getRowId={(row) => row.usuario_id}
+  sx={{
+    // Establece la variable CSS
+    '--DataGrid-containerBackground': '#007391',
+
+    '& .MuiDataGrid-columnHeaders': {
+      backgroundColor: 'var(--DataGrid-containerBackground)',
+      color: '#ffffff',
+      fontWeight: 'bold',
+    },
+    '& .MuiDataGrid-columnHeaderTitle': {
+      color: '#ffffff',
+    },
+  }}
+/>
+
       </Box>
 
       {openModal && <UsuarioModal open={openModal} onClose={handleCloseModal} onSave={handleSave} user={editingUser} />}

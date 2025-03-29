@@ -26,6 +26,26 @@ export default function CustomDataGrid({ rows, columns, totalRows, pagination, s
           // Esto permite que el alto de la fila se ajuste según el contenido
           return 'auto'; // O puedes calcular una altura basada en el contenido
         }}
+        sx={{
+          '--DataGrid-containerBackground': '#007391',
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: 'var(--DataGrid-containerBackground)',
+            color: '#ffffff',
+            fontWeight: 'bold',
+          },
+          '& .MuiDataGrid-columnHeaderTitle': {
+            color: '#ffffff',
+            fontWeight: '600',
+            fontSize: '1rem',
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: '#f0fdfa',
+          },
+          '& .MuiDataGrid-cell': {
+  paddingTop: '15px',
+  paddingBottom: '12px',
+},
+        }}
       />
     </div>
   );

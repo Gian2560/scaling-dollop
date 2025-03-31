@@ -29,7 +29,7 @@ export default async function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Gestión de Clientes */}
           <Link href="/clientes" className="group bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition flex flex-col items-center">
-            <img src="https://cdn-icons-png.flaticon.com/512/8254/8254206.png" alt="Clientes" className="w-16 mb-4" />
+            <img src="/client.jpg" alt="Clientes" className="w-16 mb-4" />
             <h3 className="text-xl font-semibold text-[#007391]">Gestión de Clientes</h3>
             <p className="text-gray-600 mt-2 text-center">
               Administra clientes con pagos pendientes y genera estrategias de recuperación.
@@ -38,7 +38,7 @@ export default async function Home() {
 
           {/* Promesas de Pago */}
           <Link href="/promesasPago" className="group bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition flex flex-col items-center">
-            <img src="https://st2.depositphotos.com/1868209/6442/i/450/depositphotos_64423649-stock-photo-buisnessmen-shaking-hands-and-receiving.jpg" alt="Promesas de Pago" className="w-16 mb-4" />
+            <img src="/paid.jpg" alt="Promesas de Pago" className="w-16 mb-4" />
             <h3 className="text-xl font-semibold text-[#007391]">Promesas de Pago</h3>
             <p className="text-gray-600 mt-2 text-center">
               Registra y gestiona acuerdos de pago con los clientes.
@@ -47,7 +47,7 @@ export default async function Home() {
 
           {/* Envío de Mensajes */}
           <Link href="/mensajeria" className="group bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition flex flex-col items-center">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSA1LpwcpcGi53zdTUmbwKrr0BfAX8O73pZIQ&s" alt="Mensajería" className="w-16 mb-4" />
+            <img src="/mesage.jpg" alt="Mensajería" className="w-16 mb-4" />
             <h3 className="text-xl font-semibold text-[#007391]">Envío de Mensajes</h3>
             <p className="text-gray-600 mt-2 text-center">
               Automatiza y gestiona la comunicación con clientes en mora.

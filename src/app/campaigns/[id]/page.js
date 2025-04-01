@@ -61,6 +61,7 @@ const CampaignDetailPage = () => {
         id: index + 1,
         numero: row["Numero"],
         nombre: row["Nombre"],
+        gestor: row["Asesor"]
       }));
 
       setClients(formattedClients);
@@ -149,13 +150,14 @@ const CampaignDetailPage = () => {
               { field: "id", headerName: "ID Cliente", flex: 1 },
               { field: "nombre", headerName: "Nombre", flex: 1 },
               { field: "celular", headerName: "Celular", flex: 1 },
+              { field: "gestor", headerName: "Gestor", flex: 1 },
               {
                 field: "acciones",
                 headerName: "Acciones",
                 flex: 1,
                 renderCell: (params) => (
                   <IconButton
-                    onClick={() => handleRemoveClient(params.row.cliente_id)}
+                    onClick={() => handleRemoveClient(params.row.id)}
                     sx={{ color: "#D32F2F" }}
                   >
                     <Delete />

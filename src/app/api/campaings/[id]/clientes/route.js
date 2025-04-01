@@ -57,6 +57,7 @@ export async function GET(req, { params }) {
         celular: c.cliente.celular,
         email: c.cliente.email,
         estado: c.cliente.estado,
+        gestor: c.cliente.gestor,
         fecha_ultima_interaccion: c.cliente.fecha_ultima_interaccion,
       })),
       pagination: {

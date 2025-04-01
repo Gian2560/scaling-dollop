@@ -62,7 +62,8 @@ export async function POST(req, context) {
         const db = mongoClient.db(process.env.MONGODB_DB);
 
         for (const cliente of clientes) {
-            let { Numero, Nombre } = cliente;
+            let { Numero, Nombre, Asesor } = cliente;
+            console.log("gaaaaaaaaaaaaaaaaaa", cliente);
 
             if (!Numero || !Nombre) {
                 console.warn("❗ Cliente omitido por datos faltantes:", cliente);
@@ -95,6 +96,7 @@ export async function POST(req, context) {
                             documento_identidad: "",
                             tipo_documento: "Desconocido",
                             estado: "en seguimiento",
+                            gestor: Asesor, 
                         },
                     });
                     console.log(`✅ Cliente creado en MySQL con ID: ${clienteExistente.cliente_id}`);
@@ -160,6 +162,7 @@ export async function POST(req, context) {
                 cliente_id: clienteId,
                 nombre: clienteExistente.nombre,
                 celular: clienteExistente.celular,
+                gestor: clienteExistente.gestor
             });
         }
 

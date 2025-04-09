@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchClientes, fetchConversacion, getGestores ,updateCliente } from "../../services/clientesService";
+import {useSession } from "next-auth/react";
 
 export function useClientes() {
   const [clientes, setClientes] = useState([]);
@@ -8,6 +9,7 @@ export function useClientes() {
   const [openModal, setOpenModal] = useState(false);
   const [openConversationModal, setOpenConversationModal] = useState(false);
   const [cliente, setCliente] = useState(null);
+  const { data: session, status } = useSession();
   const [conversationData, setConversationData] = useState(null);
   const [conversationLoading, setConversationLoading] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(0);
@@ -26,7 +28,7 @@ export function useClientes() {
   useEffect(() => {
     const loadClientes = async () => {
       setLoading(true);
-      const data = await fetchClientes({ page: pagination.page, pageSize: pagination.pageSize, filters, sortModel });
+      const data = await fetchClientes({ page: pagination.page, pageSize: pagination.pageSize, filters, sortModel, name: session?.user?.name,role: session?.user?.role});
       setClientes(data.clientes);
       setTotalClientes(data.total);
       setLoading(false);
@@ -34,11 +36,12 @@ export function useClientes() {
     const loadGestores = async () => {
       const gestoresData = await getGestores();
       setGestores(gestoresData);
-      console.log("gestores", gestoresData);
+      
+      console.log("gestores", session);
     };
     loadGestores();
     loadClientes();
-  }, [filters, pagination, sortModel]);  
+  }, [filters, pagination, sortModel,session,status]);  
 
   // 🔹 Función para manejar el modal de acción comercial
   const handleAccionComercial = (cliente) => {

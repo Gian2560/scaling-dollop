@@ -66,8 +66,6 @@ export async function POST(req, { params }) {
         // Supón que el template tiene 3 parámetros, como nombre, apellido y una fecha
         messagePayload.contentVariables = JSON.stringify({
           1: cliente.nombre,        // Primer parámetro, nombre del cliente
-          2: cliente.apellido || "", // Segundo parámetro, apellido (si existe)
-          3: new Date().toLocaleDateString(), // Tercer parámetro, fecha actual
         });
       }
 

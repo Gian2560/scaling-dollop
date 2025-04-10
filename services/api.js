@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 const axiosInstance = axios.create({
   baseURL: `${API_URL}/api`, // 🔹 Asegura que se use correctamente la API interna
   headers: { "Content-Type": "application/json" },
-  timeout: 100000, 
+  timeout: 10000, 
 });
 
 // 🔹 Interceptor para adjuntar el token en cada solicitud

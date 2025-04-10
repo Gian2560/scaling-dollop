@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import clientPromise from "@/lib/mongodb"; // 🔹 Importa la conexión persistente
+import clientPromise from "@/lib/mongodb"; // Importa la conexión persistente
 import twilio from "twilio";
 
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -12,7 +12,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
     }
 
-    // 🔹 Obtener la campaña con su template y clientes asociados
+    // Obtener la campaña con su template y clientes asociados
     const campaign = await prisma.campanha.findUnique({
       where: { campanha_id: campaignId },
       include: { template: true, cliente_campanha: { include: { cliente: true } } },
@@ -29,143 +29,139 @@ export async function POST(req, { params }) {
     const twilioWhatsAppNumber = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
     const sentMessages = [];
 
-    // 🔹 Obtener la conexión a MongoDB de clientPromise
+    // Obtener la conexión a MongoDB de clientPromise
     const mongoClient = await clientPromise;
     const db = mongoClient.db(process.env.MONGODB_DB);
     const collection = db.collection("clientes");
 
-    for (const { cliente } of campaign.cliente_campanha) {
+    // Obtener todos los clientes de MongoDB con los números correspondientes en un solo paso
+    const phoneNumbers = campaign.cliente_campanha.map(({ cliente }) => cliente.celular);
+    const existingClientesMongo = await collection.find({
+      celular: { $in: phoneNumbers },
+    }).toArray();
+
+    const mongoClientesMap = new Map(
+      existingClientesMongo.map(cliente => [cliente.celular, cliente])
+    );
+
+    const promises = campaign.cliente_campanha.map(async ({ cliente }) => {
       if (!cliente || !cliente.celular) {
         console.warn(`⚠ Cliente ${cliente?.nombre || "Desconocido"} no tiene un número válido.`);
-        continue;
+        return;
       }
 
-      const celularFormatted = `whatsapp:${cliente.celular.trim()}`;
+      let celularFormatted = `whatsapp:${cliente.celular.trim()}`;
       const contentSid = campaign.template.template_content_sid;
 
-      // 🔹 Construir mensaje para Twilio
       let messagePayload = {
         from: twilioWhatsAppNumber,
         to: celularFormatted,
         contentSid,
       };
 
+      // Si la plantilla tiene parámetros dinámicos, los agregamos al payload
       if (campaign.template.parametro) {
+        // Aquí puedes agregar múltiples parámetros según el template
+        // Ejemplo: Si el template tiene varios parámetros, los puedes agregar de esta manera.
+        // Supón que el template tiene 3 parámetros, como nombre, apellido y una fecha
         messagePayload.contentVariables = JSON.stringify({
-          1: cliente.nombre, // Variables dinámicas si el template lo requiere
+          1: cliente.nombre,        // Primer parámetro, nombre del cliente
+          2: cliente.apellido || "", // Segundo parámetro, apellido (si existe)
+          3: new Date().toLocaleDateString(), // Tercer parámetro, fecha actual
         });
       }
 
       try {
-        // 📌 Enviar el mensaje con Twilio
+        // 📌 Enviar el mensaje con Twilio en paralelo
         const message = await client.messages.create(messagePayload);
         console.log(`📨 Mensaje enviado a ${cliente.celular}: ${message.sid}`);
 
-        // 📌 Buscar si el cliente ya tiene una conversación en MongoDB
-        const clienteMongo = await collection.findOne({ celular: cliente.celular });
+        // Buscar si el cliente ya tiene una conversación en MongoDB
+        let clienteMongo = mongoClientesMap.get(cliente.celular);
 
-        if (clienteMongo && clienteMongo.conversaciones.length > 0) {
-          // 🔹 Si ya tiene conversaciones, verificar si hay una activa
-          const tieneConversacionActiva = clienteMongo.conversaciones.some(
-            (conv) => conv.estado === "activa"
+        if (!clienteMongo) {
+          // Si el cliente no existe en MongoDB, crearlo
+          const nuevoClienteMongo = {
+            id_cliente: `cli_${Date.now()}`,
+            nombre: cliente.nombre,
+            celular: cliente.celular,
+            correo: "",
+            conversaciones: [],
+          };
+          await collection.insertOne(nuevoClienteMongo);
+          clienteMongo = nuevoClienteMongo;
+          console.log(`✅ Cliente creado en MongoDB con ID: cli_${cliente.id_cliente}`);
+        }
+
+        // Realizar actualizaciones en MongoDB de forma eficiente con bulkWrite
+        const conversacionId = `conv_${Date.now()}`;
+        const nuevaInteraccion = {
+          fecha: new Date(),
+          mensaje_chatbot: campaign.template.mensaje,
+          mensaje_id: message.sid,
+        };
+
+        const tieneConversacionActiva = clienteMongo.conversaciones.some(conv => conv.estado === "activa");
+
+        if (tieneConversacionActiva) {
+          await collection.updateOne(
+            { celular: cliente.celular, "conversaciones.estado": "activa" },
+            {
+              $push: {
+                "conversaciones.$.interacciones": nuevaInteraccion,
+              },
+              $set: { "conversaciones.$.ultima_interaccion": new Date() },
+            }
           );
-
-          if (tieneConversacionActiva) {
-            // 🔹 Si existe, actualizar la conversación activa
-            await collection.updateOne(
-              { celular: cliente.celular, "conversaciones.estado": "activa" },
-              {
-                $push: {
-                  "conversaciones.$.interacciones": {
-                    fecha: new Date(),
-                    mensaje_chatbot: campaign.template.mensaje,
-                    mensaje_id: message.sid,
-                  },
-                },
-                $set: { "conversaciones.$.ultima_interaccion": new Date() },
-              }
-            );
-          } else {
-            // 🔹 Si no hay conversaciones activas, agregar una nueva
-            await collection.updateOne(
-              { celular: cliente.celular },
-              {
-                $push: {
-                  conversaciones: {
-                    conversacion_id: `conv_${Date.now()}`,
-                    estado: "activa",
-                    ultima_interaccion: new Date(),
-                    interacciones: [
-                      {
-                        fecha: new Date(),
-                        mensaje_chatbot: campaign.template.mensaje,
-                        mensaje_id: message.sid,
-                      },
-                    ],
-                  },
-                },
-              }
-            );
-          }
         } else {
-          // 🔹 Si no tiene conversaciones, creamos la estructura completa
           await collection.updateOne(
             { celular: cliente.celular },
             {
-              $set: {
-                celular: cliente.celular,
-                conversaciones: [
-                  {
-                    conversacion_id: `conv_${Date.now()}`,
-                    estado: "activa",
-                    ultima_interaccion: new Date(),
-                    interacciones: [
-                      {
-                        fecha: new Date(),
-                        mensaje_chatbot: campaign.template.mensaje,
-                        mensaje_id: message.sid,
-                      },
-                    ],
-                  },
-                ],
+              $push: {
+                conversaciones: {
+                  conversacion_id: conversacionId,
+                  estado: "activa",
+                  ultima_interaccion: new Date(),
+                  interacciones: [nuevaInteraccion],
+                },
               },
-            },
-            { upsert: true }
+            }
           );
         }
-
-
 
         sentMessages.push({ to: cliente.celular, status: "sent", sid: message.sid });
       } catch (error) {
         console.error(`❌ Error al enviar mensaje a ${cliente.celular}:`, error);
         sentMessages.push({ to: cliente.celular, status: "failed", error: error.message });
 
-        // 📌 También registrar el intento fallido en MongoDB
+        // Registra el intento fallido en MongoDB
+        const conversacionId = `conv_${Date.now()}`;
+        const nuevaInteraccion = {
+          fecha: new Date(),
+          mensaje_chatbot: campaign.template.mensaje,
+          mensaje_id: null,
+          estado: "fallido",
+          error: error.message,
+        };
+
         await collection.updateOne(
           { celular: cliente.celular },
           {
             $push: {
               conversaciones: {
-                conversacion_id: `conv_${Date.now()}`,
+                conversacion_id: conversacionId,
                 estado: "fallido",
                 ultima_interaccion: new Date(),
-                interacciones: [
-                  {
-                    fecha: new Date(),
-                    mensaje_chatbot: campaign.template.mensaje,
-                    mensaje_id: null,
-                    estado: "fallido",
-                    error: error.message,
-                  },
-                ],
+                interacciones: [nuevaInteraccion],
               },
             },
-          },
-          { upsert: true }
+          }
         );
       }
-    }
+    });
+
+    // Esperar todas las promesas
+    await Promise.all(promises);
 
     return NextResponse.json({ success: true, sentMessages });
   } catch (error) {

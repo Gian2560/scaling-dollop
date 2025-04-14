@@ -13,7 +13,8 @@ export const fetchClientes = async ({ page = 1, pageSize = 10, filters = {}, sor
       orderBy: sortModel.length ? sortModel[0].field : "fecha_creacion",
       order: sortModel.length ? sortModel[0].sort : "asc",
       name,
-      role
+      role,
+      accionComercial: filters.accionComercial !== "Todos" ? filters.accionComercial : undefined, // Filtro de Acción Comercial
     };
 
     console.log("📡 Enviando solicitud con parámetros:", params);

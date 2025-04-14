@@ -107,6 +107,28 @@ export default function ClientesFilters({ filters, setFilters }) {
             </Select>
           </FormControl>
         </Grid>
+         {/* Filtro de Acción Comercial */}
+         <Grid item xs={12} sm={4}>
+          <TextField
+            select
+            label="Acción Comercial"
+            size="small"
+            value={filters.accionComercial || "Todos"}
+            onChange={(e) => setFilters({ ...filters, accionComercial: e.target.value })}
+            fullWidth
+            variant="outlined"
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <MenuItem value="Todos">Todos</MenuItem>
+            <MenuItem value="No interesado">No interesado</MenuItem>
+            <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
+            <MenuItem value="Volver a contactar">Volver a contactar</MenuItem>
+       
+          </TextField>
+        </Grid>
 
         {preset === "custom" && (
           <>

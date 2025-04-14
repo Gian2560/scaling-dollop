@@ -15,7 +15,8 @@ export async function GET(req) {
     let fechaFin = searchParams.get("fechaFin");
     const gestor =searchParams.get("name");
     const role = searchParams.get("role");
-    console.log("🔎 Parámetros recibidos:", { page, pageSize, search, estado, bound, fechaInicio, fechaFin, orderBy, order,gestor });
+    const accionComercial = searchParams.get("accionComercial"); //
+    console.log("🔎 Parámetros recibidos:", { page, pageSize, search, estado, bound, fechaInicio, fechaFin, orderBy, order,gestor,accionComercial });
 
     // 🛠️ Validar fechas (evitar null)
     fechaInicio = fechaInicio && fechaInicio !== "null" ? new Date(fechaInicio) : undefined;
@@ -53,6 +54,10 @@ export async function GET(req) {
       // o si utilizas gestor_id, sería:
       // filtros.gestor_id = parseInt(gestor, 10);
     }
+    if (accionComercial && accionComercial !== "Todos") {
+      filtros.accion = accionComercial; // Filtrar por "Acción Comercial"
+    }
+
     console.log("📌 Filtros aplicados:", filtros);
 
     // 🛠️ Obtener clientes con Prisma

@@ -15,6 +15,7 @@ export const fetchClientes = async ({ page = 1, pageSize = 10, filters = {}, sor
       name,
       role,
       accionComercial: filters.accionComercial !== "Todos" ? filters.accionComercial : undefined, // Filtro de Acción Comercial
+      interaccionBot: filters.interaccionBot || "Todos", 
     };
 
     console.log("📡 Enviando solicitud con parámetros:", params);

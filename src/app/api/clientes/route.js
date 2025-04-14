@@ -16,6 +16,8 @@ export async function GET(req) {
     const gestor =searchParams.get("name");
     const role = searchParams.get("role");
     const accionComercial = searchParams.get("accionComercial"); //
+    const interaccionBot = searchParams.get("interaccionBot"); // Nuevo parámetro
+
     console.log("🔎 Parámetros recibidos:", { page, pageSize, search, estado, bound, fechaInicio, fechaFin, orderBy, order,gestor,accionComercial });
 
     // 🛠️ Validar fechas (evitar null)
@@ -57,7 +59,14 @@ export async function GET(req) {
     if (accionComercial && accionComercial !== "Todos") {
       filtros.accion = accionComercial; // Filtrar por "Acción Comercial"
     }
-
+    if (interaccionBot === "Con interacción") {
+      filtros.fecha_ultima_interaccion_bot = { not: null }; // Clientes con fecha de interacción
+    } else if (interaccionBot === "Sin interacción") {
+      filtros.fecha_ultima_interaccion_bot = null; // Clientes sin fecha de interacción
+    }
+    if (accionComercial === "Sin accion comercial") {
+      filtros.accion = ""; // Filtra por clientes que no tienen acción comercial
+    }       
     console.log("📌 Filtros aplicados:", filtros);
 
     // 🛠️ Obtener clientes con Prisma

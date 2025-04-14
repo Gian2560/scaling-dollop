@@ -9,6 +9,7 @@ import { es } from "date-fns/locale"; // 📌 Asegura el idioma correcto para es
 import { startOfDay, endOfDay, subDays } from "date-fns";
 
 const presets = [
+  { label: "Todos", value: "all" }, 
   { label: "Hoy", value: "today" },
   { label: "Últimos 7 días", value: "7" },
   { label: "Últimos 30 días", value: "30" },
@@ -17,7 +18,7 @@ const presets = [
 ];
 
 export default function ClientesFilters({ filters, setFilters }) {
-  const [preset, setPreset] = useState("today");
+  const [preset, setPreset] = useState("all");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
   const [endDate, setEndDate] = useState(endOfDay(new Date()));
 
@@ -36,6 +37,10 @@ export default function ClientesFilters({ filters, setFilters }) {
       const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       newStart = startOfDay(firstDay);
       newEnd = endOfDay(new Date());
+    } else if (value === "all") {
+      // Si se selecciona "Todos", no se establece ningún filtro de fecha
+      newStart = undefined;
+      newEnd = undefined;
     } else {
       return; // Si es "custom", no cambia fechas hasta que el usuario elija
     }
@@ -44,8 +49,8 @@ export default function ClientesFilters({ filters, setFilters }) {
     setEndDate(newEnd);
     setFilters((prev) => ({
       ...prev,
-      fechaInicio: newStart.toISOString(),
-      fechaFin: newEnd.toISOString(),
+      fechaInicio: newStart ? newStart.toISOString() : "", 
+      fechaFin: newEnd ? newEnd.toISOString() : "",
     }));
   };
 
@@ -127,8 +132,28 @@ export default function ClientesFilters({ filters, setFilters }) {
             <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
             <MenuItem value="Volver a contactar">Volver a contactar</MenuItem>
        
+            <MenuItem value="Sin accion comercial">Sin acción comercial</MenuItem> 
           </TextField>
         </Grid>
+        <Grid item xs={12} sm={4}>
+  <TextField
+    select
+    label="Interacción con Bot"
+    size="small"
+    value={filters.interaccionBot || "Todos"} // Valor por defecto "Todos"
+    onChange={(e) => setFilters({ ...filters, interaccionBot: e.target.value })}
+    fullWidth
+    variant="outlined"
+    sx={{
+      borderRadius: "8px",
+      backgroundColor: "#f9f9f9",
+    }}
+  >
+    <MenuItem value="Todos">Todos</MenuItem>
+    <MenuItem value="Con interacción">Con interacción</MenuItem>
+    <MenuItem value="Sin interacción">Sin interacción</MenuItem>
+  </TextField>
+</Grid>
 
         {preset === "custom" && (
           <>

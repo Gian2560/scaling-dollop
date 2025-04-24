@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
+import pMap from "p-map";
 require("dotenv").config();
 
 const uri = process.env.DATABASE_URL_MONGODB;
@@ -39,7 +40,7 @@ export async function POST(req, context) {
     const clientesProcesados = [];
     const omitidos = [];
 
-    const resultados = await Promise.all(clientIds.map(async (clienteId) => {
+    const resultados = await pMap(clientIds, async (clienteId) => {
       try {
         const clienteExistente = await prisma.cliente.findUnique({
           where: { cliente_id: clienteId },
@@ -93,20 +94,21 @@ export async function POST(req, context) {
 
         console.log(`✅ Cliente ${clienteId} agregado a campaña ${campanhaId}`);
       } catch (innerError) {
-        console.error(`❌ Error interno al procesar cliente ${clienteId}:`, innerError);
+        console.error(`❌ Error interno al procesar cliente ${clienteId}:`, innerError?.message || innerError);
         omitidos.push({ cliente_id: clienteId, razon: "Error inesperado" });
       }
-    }));
+    }, { concurrency: 20 }); // Cambia 5 por el número que consideres seguro
 
     const resumen = {
       intentados: clientIds.length,
       exitosos: clientesProcesados.length,
       omitidos: omitidos.length,
-      fallidos: resultados.filter(r => r.status === 'rejected').length
+      fallidos: resultados.filter(r => r.status === 'rejected').length,
     };
 
     console.log("📊 Resumen final de procesamiento:");
     console.log(JSON.stringify(resumen, null, 2));
+    console.log("📋 Detalles de clientes omitidos:", JSON.stringify(omitidos, null, 2));
 
     return NextResponse.json({
       message: `Clientes procesados para la campaña ${campanhaId}`,
@@ -115,7 +117,7 @@ export async function POST(req, context) {
       detalles_omitidos: omitidos
     });
   } catch (error) {
-    console.error("❌ Error al agregar clientes por gestor a campaña:", error);
+    console.error("❌ Error al agregar clientes por gestor a campaña:", error?.message || error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

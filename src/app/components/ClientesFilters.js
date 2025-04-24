@@ -131,7 +131,7 @@ export default function ClientesFilters({ filters, setFilters }) {
             <MenuItem value="No interesado">No interesado</MenuItem>
             <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
             <MenuItem value="Volver a contactar">Volver a contactar</MenuItem>
-       
+            <MenuItem value="Pago">Pago</MenuItem>
             <MenuItem value="Sin accion comercial">Sin acción comercial</MenuItem> 
           </TextField>
         </Grid>

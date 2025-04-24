@@ -125,6 +125,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                         <MenuItem value="Volver a contactar">Volver a contactar</MenuItem>
                         <MenuItem value="No interesado">No interesado</MenuItem>
                         <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
+                        <MenuItem value="Pago">Pago</MenuItem>
                     </Select>
                 </FormControl>
 

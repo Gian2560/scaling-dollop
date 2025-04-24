@@ -4,24 +4,32 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useCampaignDetail from "@/hooks/useCampaignDetail";
 import {
-  Box, Typography, Button, CircularProgress, Alert, Dialog, DialogTitle, 
-  DialogContent, DialogActions, Table, TableHead, TableRow, TableCell, TableBody, 
+  Box, Typography, Button, CircularProgress, Alert, Dialog, DialogTitle,
+  DialogContent, DialogActions, Table, TableHead, TableRow, TableCell, TableBody,
   Card, CardContent, Divider, IconButton
 } from "@mui/material";
 import CustomDataGrid from "@/app/components/CustomDataGrid";
 import * as XLSX from "xlsx";
-import { ArrowBack, UploadFile, Send, Delete } from "@mui/icons-material"; 
+import { ArrowBack, UploadFile, Send, Delete } from "@mui/icons-material";
+import { addClientesACampanha, getClientesPorGestor, getGestores } from "../../../../services/campaignService";
+import axiosInstance from "../../../../services/api";
 
 const CampaignDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const campaignId = params?.id;
-  
+
   const [openModal, setOpenModal] = useState(false);
   const [file, setFile] = useState(null);
   const [clients, setClients] = useState([]);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const fileInputRef = useRef(null);
+
+  const [openSelectModal, setOpenSelectModal] = useState(false);
+  const [gestores, setGestores] = useState([]);
+  const [selectedGestor, setSelectedGestor] = useState("");
+  const [filteredClients, setFilteredClients] = useState([]);
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
 
   const {
     campaign,
@@ -38,10 +46,17 @@ const CampaignDetailPage = () => {
   } = useCampaignDetail(campaignId);
 
   useEffect(() => {
+    getGestores().then(setGestores);
+    console.log("GESTORES:", gestores);
+
+  }, []);
+
+  useEffect(() => {
+
     if (campaignId) {
       fetchCampaignDetail();
     }
-    console.log("camapla",campaign);
+    console.log("camapla", campaign);
   }, [campaignId]);
 
   const handleFileUpload = (event) => {
@@ -79,6 +94,13 @@ const CampaignDetailPage = () => {
     fetchCampaignDetail();
     setLoadingUpload(false);
   };
+  const handleChangeGestor = async (value) => {
+    setSelectedGestor(value);
+    const clientes = await getClientesPorGestor(value);
+    setFilteredClients(clientes);
+    setSelectedClientIds([]); // resetear selección
+  };
+
 
   return (
     <Box p={3} width="100%" maxWidth="1200px" margin="auto" height="100%">
@@ -138,6 +160,15 @@ const CampaignDetailPage = () => {
             >
               Enviar Mensajes
             </Button>
+            <Button
+              variant="contained"
+              onClick={() => setOpenSelectModal(true)}
+              sx={{ backgroundColor: "#ffa000", "&:hover": { backgroundColor: "#ff8f00" } }}
+              startIcon={<Send />}
+            >
+              Seleccionar Clientes por Gestor
+            </Button>
+
           </Box>
 
           {/* 🔹 TABLA DE CLIENTES */}
@@ -182,6 +213,99 @@ const CampaignDetailPage = () => {
               )}
             </DialogActions>
           </Dialog>
+          <Dialog open={openSelectModal} onClose={() => setOpenSelectModal(false)} maxWidth="md" fullWidth>
+            <DialogTitle>Seleccionar Clientes por Gestor</DialogTitle>
+            <DialogContent>
+              <Box marginBottom={2}>
+                <select
+                  value={selectedGestor}
+                  onChange={(e) => handleChangeGestor(e.target.value)}
+                  style={{ width: "100%", padding: 10 }}
+                >
+                  <option value="">Selecciona un gestor</option>
+                  {gestores.map((g, index) => (
+                    <option key={index} value={g}>{g}</option>
+                  ))}
+                </select>
+              </Box>
+              <Box display="flex" justifyContent="flex-end" gap={2} mb={2}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    const allIds = filteredClients.map((c) => c.cliente_id);
+                    setSelectedClientIds(allIds);
+                  }}
+                >
+                  Seleccionar todos
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setSelectedClientIds([])}
+                >
+                  Deseleccionar todos
+                </Button>
+              </Box>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell></TableCell>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Nombre</TableCell>
+                    <TableCell>Celular</TableCell>
+                    <TableCell>Gestor</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredClients.map((cliente) => (
+                    <TableRow key={cliente.cliente_id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedClientIds.includes(cliente.cliente_id)}
+                          onChange={() => {
+                            setSelectedClientIds((prev) =>
+                              prev.includes(cliente.cliente_id)
+                                ? prev.filter((id) => id !== cliente.cliente_id)
+                                : [...prev, cliente.cliente_id]
+                            );
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>{cliente.cliente_id}</TableCell>
+                      <TableCell>{cliente.nombre}</TableCell>
+                      <TableCell>{cliente.celular}</TableCell>
+                      <TableCell>{cliente.gestor}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenSelectModal(false)}>Cerrar</Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const data = await addClientesACampanha(campaignId, selectedClientIds);
+                    console.log("📊 Resumen final:", data.resumen); // opcional
+                    setOpenSelectModal(false);
+                    fetchCampaignDetail(); // refresca lista
+                  } catch (err) {
+                    alert("Ocurrió un error al agregar clientes. Revisa consola.");
+                  }
+                }}
+                variant="contained"
+                color="primary"
+                disabled={selectedClientIds.length === 0}
+              >
+                Agregar a campaña
+              </Button>
+
+            </DialogActions>
+          </Dialog>
+
+
 
           {snackbar}
 

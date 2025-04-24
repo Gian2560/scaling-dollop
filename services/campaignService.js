@@ -76,3 +76,27 @@ export const removeClientFromCampaign = async (id, clientId) => {
       throw error;
     }
   };
+
+ 
+export const getGestores = async () => {
+  const res = await axiosInstance.get("/gestor");
+  return res.data;
+};
+
+export const getClientesPorGestor = async (gestor) => {
+  const res = await axiosInstance.post("/clientes-por-gestor", { gestor });
+  return res.data;
+};
+
+export const addClientesACampanha = async (campaignId, clientIds) => {
+  try {
+    const response = await axiosInstance.post(`/campaings/add-clients/${campaignId}`, {
+      clientIds,
+    });
+    console.log("✅ Resumen desde servidor:", response.data.resumen);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error en el servicio addClientesACampanha:", error);
+    throw error;
+  }
+};

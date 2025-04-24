@@ -39,7 +39,7 @@ export async function POST(req, context) {
     const clientesProcesados = [];
     const omitidos = [];
 
-    const resultados = await Promise.allSettled(clientIds.map(async (clienteId) => {
+    const resultados = await Promise.all(clientIds.map(async (clienteId) => {
       try {
         const clienteExistente = await prisma.cliente.findUnique({
           where: { cliente_id: clienteId },

@@ -40,64 +40,66 @@ export async function POST(req, context) {
     const clientesProcesados = [];
     const omitidos = [];
 
-    const resultados = await pMap(clientIds, async (clienteId) => {
-      try {
-        const clienteExistente = await prisma.cliente.findUnique({
-          where: { cliente_id: clienteId },
-        });
+    const resultados = await Promise.allSettled(
+      clientIds.map(async (clienteId) => {
+        try {
+          const clienteExistente = await prisma.cliente.findUnique({
+            where: { cliente_id: clienteId },
+          });
 
-        if (!clienteExistente) {
-          console.warn(`⚠️ Cliente con ID ${clienteId} no encontrado en MySQL.`);
-          omitidos.push({ cliente_id: clienteId, razon: "No existe en MySQL" });
-          return;
-        }
+          if (!clienteExistente) {
+            console.warn(`⚠️ Cliente con ID ${clienteId} no encontrado en MySQL.`);
+            omitidos.push({ cliente_id: clienteId, razon: "No existe en MySQL" });
+            return;
+          }
 
-        const idMongo = `cli_${clienteId}`;
-        let clienteMongo = existingClientesMongo.find((client) => client.id_cliente === idMongo);
+          const idMongo = `cli_${clienteId}`;
+          let clienteMongo = existingClientesMongo.find((client) => client.id_cliente === idMongo);
 
-        if (!clienteMongo) {
-          await db.collection("clientes").insertOne({
-            id_cliente: idMongo,
+          if (!clienteMongo) {
+            await db.collection("clientes").insertOne({
+              id_cliente: idMongo,
+              nombre: clienteExistente.nombre,
+              celular: clienteExistente.celular,
+              correo: "",
+              conversaciones: [],
+            });
+          }
+
+          const yaAsociado = await prisma.cliente_campanha.findFirst({
+            where: {
+              cliente_id: clienteId,
+              campanha_id: campanhaId,
+            },
+          });
+
+          if (yaAsociado) {
+            console.log(`🔁 Cliente ${clienteId} ya está en la campaña ${campanhaId}.`);
+            omitidos.push({ cliente_id: clienteId, razon: "Ya asociado a la campaña" });
+            return;
+          }
+
+          await prisma.cliente_campanha.create({
+            data: {
+              cliente_id: clienteId,
+              campanha_id: campanhaId,
+            },
+          });
+
+          clientesProcesados.push({
+            cliente_id: clienteId,
             nombre: clienteExistente.nombre,
             celular: clienteExistente.celular,
-            correo: "",
-            conversaciones: [],
+            gestor: clienteExistente.gestor,
           });
+
+          console.log(`✅ Cliente ${clienteId} agregado a campaña ${campanhaId}`);
+        } catch (innerError) {
+          console.error(`❌ Error interno al procesar cliente ${clienteId}:`, innerError?.message || innerError);
+          omitidos.push({ cliente_id: clienteId, razon: "Error inesperado" });
         }
-
-        const yaAsociado = await prisma.cliente_campanha.findFirst({
-          where: {
-            cliente_id: clienteId,
-            campanha_id: campanhaId,
-          },
-        });
-
-        if (yaAsociado) {
-          console.log(`🔁 Cliente ${clienteId} ya está en la campaña ${campanhaId}.`);
-          omitidos.push({ cliente_id: clienteId, razon: "Ya asociado a la campaña" });
-          return;
-        }
-
-        await prisma.cliente_campanha.create({
-          data: {
-            cliente_id: clienteId,
-            campanha_id: campanhaId,
-          },
-        });
-
-        clientesProcesados.push({
-          cliente_id: clienteId,
-          nombre: clienteExistente.nombre,
-          celular: clienteExistente.celular,
-          gestor: clienteExistente.gestor,
-        });
-
-        console.log(`✅ Cliente ${clienteId} agregado a campaña ${campanhaId}`);
-      } catch (innerError) {
-        console.error(`❌ Error interno al procesar cliente ${clienteId}:`, innerError?.message || innerError);
-        omitidos.push({ cliente_id: clienteId, razon: "Error inesperado" });
-      }
-    }, { concurrency: 20 }); // Cambia 5 por el número que consideres seguro
+      })
+    );
 
     const resumen = {
       intentados: clientIds.length,

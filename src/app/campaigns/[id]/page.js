@@ -100,6 +100,14 @@ const CampaignDetailPage = () => {
     setFilteredClients(clientes);
     setSelectedClientIds([]); // resetear selección
   };
+  function dividirEnLotes(array, tamañoLote) {
+    const lotes = [];
+    for (let i = 0; i < array.length; i += tamañoLote) {
+      lotes.push(array.slice(i, i + tamañoLote));
+    }
+    return lotes;
+  }
+
 
 
   return (
@@ -287,14 +295,22 @@ const CampaignDetailPage = () => {
               <Button
                 onClick={async () => {
                   try {
-                    const data = await addClientesACampanha(campaignId, selectedClientIds);
-                    console.log("📊 Resumen final:", data.resumen); // opcional
+                    const lotes = dividirEnLotes(selectedClientIds, 100); // 🔁 Lotes de 100 clientes
+                    for (const lote of lotes) {
+                      await axiosInstance.post(`/campaings/add-clients/${campaignId}`, {
+                        clientIds: lote,
+                      });
+                    }
+
                     setOpenSelectModal(false);
-                    fetchCampaignDetail(); // refresca lista
+                    fetchCampaignDetail(); // Refresca la vista de campaña
+                    alert("✅ Clientes agregados por lotes.");
                   } catch (err) {
-                    alert("Ocurrió un error al agregar clientes. Revisa consola.");
+                    console.error("❌ Error al agregar clientes por gestor:", err);
+                    alert("❌ Error al agregar clientes. Revisa consola.");
                   }
                 }}
+
                 variant="contained"
                 color="primary"
                 disabled={selectedClientIds.length === 0}

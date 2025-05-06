@@ -17,6 +17,8 @@ export async function GET(req) {
     const role = searchParams.get("role");
     const accionComercial = searchParams.get("accionComercial"); //
     const interaccionBot = searchParams.get("interaccionBot"); // Nuevo parámetro
+    let fechaRegistro = searchParams.get("fechaRegistro");
+    
 
     console.log("🔎 Parámetros recibidos:", { page, pageSize, search, estado, bound, fechaInicio, fechaFin, orderBy, order,gestor,accionComercial });
 
@@ -28,6 +30,17 @@ export async function GET(req) {
 
     // 🛠️ Construcción de filtros dinámicos
     let filtros = {};
+    if (fechaRegistro && fechaRegistro !== "null") {
+      const fecha = new Date(fechaRegistro);
+      const primerDiaMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+      const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+      filtros.fecha_creacion = {
+        gte: primerDiaMes,
+        lte: ultimoDiaMes,
+      };
+    }
+    
 
     if (search) {
       filtros.OR = [
@@ -66,7 +79,9 @@ export async function GET(req) {
     }
     if (accionComercial === "Sin accion comercial") {
       filtros.accion = ""; // Filtra por clientes que no tienen acción comercial
-    }       
+    } 
+    
+    
     console.log("📌 Filtros aplicados:", filtros);
 
     // 🛠️ Obtener clientes con Prisma

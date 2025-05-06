@@ -92,6 +92,7 @@ export default function ClientesFilters({ filters, setFilters }) {
             <MenuItem value="No interesado">No interesado</MenuItem>
             <MenuItem value="Finalizado">Finalizado</MenuItem>
             <MenuItem value="En seguimiento">En seguimiento</MenuItem>
+            <MenuItem value="No contactado">No contactado</MenuItem>
           </TextField>
         </Grid>
 
@@ -189,6 +190,32 @@ export default function ClientesFilters({ filters, setFilters }) {
             </Grid>
           </>
         )}
+<Grid item xs={12} sm={4}>
+  <DatePicker
+    label="Fecha de Registro"
+    views={['year', 'month']}
+    value={filters.fechaRegistro || null}
+    onChange={(newValue) => {
+      setFilters((prev) => ({
+        ...prev,
+        fechaRegistro: newValue || null,
+      }));
+    }}    
+    format="MMMM yyyy"
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        size: "small",
+        variant: "outlined",
+        sx: {
+          borderRadius: "8px",
+          backgroundColor: "#f9f9f9",
+        },
+      },
+    }}
+  />
+</Grid>
+
 
         <Grid item xs={12}>
           <Button
@@ -200,8 +227,11 @@ export default function ClientesFilters({ filters, setFilters }) {
               setFilters({
                 search: "",
                 estado: "Todos",
+                accionComercial: "Todos",
+                interaccionBot: "Todos",
                 fechaInicio: "",
                 fechaFin: "",
+                fechaRegistro: "",
               });
             }}
             sx={{

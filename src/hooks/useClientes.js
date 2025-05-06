@@ -20,6 +20,7 @@ export function useClientes() {
     bound: "Todos",
     fechaInicio: "",
     fechaFin: "",
+    fechaRegistro: "",
   });
 
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });

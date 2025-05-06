@@ -10,6 +10,7 @@ export const fetchClientes = async ({ page = 1, pageSize = 10, filters = {}, sor
       bound: filters.bound !== "Todos" ? filters.bound : undefined,
       fechaInicio: filters.fechaInicio || undefined,
       fechaFin: filters.fechaFin || undefined,
+      fechaRegistro : filters.fechaRegistro,
       orderBy: sortModel.length ? sortModel[0].field : "fecha_creacion",
       order: sortModel.length ? sortModel[0].sort : "asc",
       name,

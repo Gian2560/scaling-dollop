@@ -98,7 +98,7 @@ export async function POST(req, context) {
                 nombre: Nombre,
                 documento_identidad: "",
                 tipo_documento: "Desconocido",
-                estado: "en seguimiento",
+                estado: "no contactado",
                 gestor: Asesor, 
               },
             });

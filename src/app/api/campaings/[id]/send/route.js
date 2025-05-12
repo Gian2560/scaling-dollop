@@ -44,7 +44,7 @@ export async function POST(req, { params }) {
       existingClientesMongo.map(cliente => [cliente.celular, cliente])
     );
 
-    const promises = campaign.cliente_campanha.map(async ({ cliente }) => {
+    const promises = campaign.cliente_campanha.map(async ({ cliente, cliente_campanha_id }) => {
       if (!cliente || !cliente.celular) {
         console.warn(`⚠ Cliente ${cliente?.nombre || "Desconocido"} no tiene un número válido.`);
         return;
@@ -73,7 +73,15 @@ export async function POST(req, { params }) {
         // 📌 Enviar el mensaje con Twilio en paralelo
         const message = await client.messages.create(messagePayload);
         console.log(`📨 Mensaje enviado a ${cliente.celular}: ${message.sid}`);
-
+        // dentro de tu loop, tras recibir el `message` de Twilio:
+        await prisma.cliente_campanha.update({
+          where: { cliente_campanha_id },   // asume que ya lo has extraído antes
+          data: {
+            message_sid: message.sid,
+            message_status: message.status,  // sin "as Prisma.InputJsonValue"
+            last_update: new Date(),
+          },
+        });
         // Buscar si el cliente ya tiene una conversación en MongoDB
         let clienteMongo = mongoClientesMap.get(cliente.celular);
 

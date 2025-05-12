@@ -97,15 +97,20 @@ model cliente {
 }
 
 model cliente_campanha {
-  cliente_campanha_id Int       @id @default(autoincrement())
+  cliente_campanha_id Int                              @id @default(autoincrement())
   cliente_id          Int
   campanha_id         Int
-  fecha_asociacion    DateTime? @default(now()) @db.DateTime(0)
-  cliente             cliente   @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_1")
-  campanha            campanha  @relation(fields: [campanha_id], references: [campanha_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_2")
+  message_sid         String?                          @db.VarChar(34)
+  message_status      cliente_campanha_message_status?
+  error_code          Int?
+  last_update         DateTime?                        @default(now()) @db.DateTime(0)
+  fecha_asociacion    DateTime?                        @default(now()) @db.DateTime(0)
+  cliente             cliente                          @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_1")
+  campanha            campanha                         @relation(fields: [campanha_id], references: [campanha_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_2")
 
   @@index([campanha_id], map: "campanha_id")
   @@index([cliente_id], map: "cliente_id")
+  @@index([message_sid], map: "idx_message_sid")
 }
 
 model codigo_pago {
@@ -251,4 +256,13 @@ model usuario {
   rol        rol?     @relation(fields: [rol_id], references: [rol_id], onUpdate: NoAction, map: "usuario_ibfk_1")
 
   @@index([rol_id], map: "rol_id")
+}
+
+enum cliente_campanha_message_status {
+  queued
+  sending
+  sent
+  delivered
+  undelivered
+  failed
 }

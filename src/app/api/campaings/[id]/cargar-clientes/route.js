@@ -82,11 +82,37 @@ export async function POST(req, context) {
 
       console.log(`⚡ MODO ULTRA RAPIDO: ${clientesValidos.length} clientes`);
 
-      // 🚀 ULTRA VELOCIDAD: Sin verificaciones, operaciones masivas directas
+      // 🚀 ULTRA VELOCIDAD: Operaciones masivas con verificación de duplicados
       const mongoClient = await clientPromise;
       const db = mongoClient.db(process.env.MONGODB_DB);
 
-      // 1️⃣ MEGA BATCH: Crear TODOS los clientes de una vez (sin chunks)
+      // 🔍 VERIFICAR QUÉ CLIENTES YA ESTÁN EN LA CAMPAÑA (una sola consulta)
+      console.log(`🔍 Verificando clientes ya en campaña ${campanhaId}...`);
+      const relacionesExistentes = await prisma.cliente_campanha.findMany({
+        where: { campanha_id: campanhaId },
+        include: { cliente: { select: { celular: true } } }
+      });
+      
+      const celularesYaEnCampanha = new Set(relacionesExistentes.map(r => r.cliente.celular));
+      console.log(`📌 ${celularesYaEnCampanha.size} clientes ya están en la campaña`);
+
+      // 🎯 FILTRAR SOLO CLIENTES NUEVOS PARA LA CAMPAÑA
+      const clientesNuevosParaCampanha = clientesValidos.filter(cliente => 
+        !celularesYaEnCampanha.has(cliente.numero)
+      );
+
+      if (clientesNuevosParaCampanha.length === 0) {
+        console.log(`✅ Todos los clientes ya están en la campaña`);
+        return NextResponse.json({
+          message: `Todos los ${clientesValidos.length} clientes ya estaban en la campaña`,
+          clientes: [],
+          tiempoTotal: "0s"
+        });
+      }
+
+      console.log(`🚀 Procesando ${clientesNuevosParaCampanha.length} clientes nuevos de ${clientesValidos.length} total`);
+
+      // 1️⃣ CREAR TODOS LOS CLIENTES (MySQL maneja duplicados automáticamente)
       const todosLosDatos = clientesValidos.map(cliente => ({
         celular: cliente.numero,
         nombre: cliente.nombre,
@@ -96,62 +122,62 @@ export async function POST(req, context) {
         gestor: cliente.asesor || ""
       }));
 
-      console.log(`🔥 Creando ${todosLosDatos.length} clientes en MySQL...`);
-      
-      // 2️⃣ OBTENER IDs y OPERACIONES MASIVAS EN PARALELO
-      const [_, todosClientesConId] = await Promise.all([
-        // Crear clientes en MySQL
-        prisma.cliente.createMany({
-          data: todosLosDatos,
-          skipDuplicates: true
-        }),
-        // Obtener todos los IDs de una vez (después de crear)
-        prisma.cliente.findMany({
-          where: { celular: { in: clientesValidos.map(c => c.numero) } },
-          select: { cliente_id: true, celular: true, nombre: true, gestor: true }
-        }).then(async (clientes) => {
-          // 3️⃣ MIENTRAS OBTENEMOS IDs, PREPARAR OPERACIONES MONGO
-          const operacionesMongo = clientes.map(cliente => ({
-            updateOne: {
-              filter: { celular: cliente.celular },
-              update: {
-                $setOnInsert: {
-                  id_cliente: `cli_${cliente.cliente_id}`,
-                  nombre: cliente.nombre,
-                  celular: cliente.celular,
-                  correo: "",
-                  conversaciones: []
-                }
-              },
-              upsert: true
+      console.log(`🔥 Creando/actualizando ${todosLosDatos.length} clientes en MySQL...`);
+      await prisma.cliente.createMany({
+        data: todosLosDatos,
+        skipDuplicates: true
+      });
+
+      // 2️⃣ OBTENER IDs DE TODOS LOS CLIENTES (existentes + nuevos)
+      console.log(`🔍 Obteniendo IDs de todos los clientes...`);
+      const todosClientesConId = await prisma.cliente.findMany({
+        where: { celular: { in: clientesValidos.map(c => c.numero) } },
+        select: { cliente_id: true, celular: true, nombre: true, gestor: true }
+      });
+
+      // 3️⃣ FILTRAR SOLO RELACIONES NUEVAS PARA LA CAMPAÑA
+      const clientesNuevosConId = todosClientesConId.filter(cliente => 
+        !celularesYaEnCampanha.has(cliente.celular)
+      );
+
+      // 4️⃣ OPERACIONES PARALELAS SOLO PARA CLIENTES NUEVOS
+      const operacionesMongo = clientesNuevosConId.map(cliente => ({
+        updateOne: {
+          filter: { celular: cliente.celular },
+          update: {
+            $setOnInsert: {
+              id_cliente: `cli_${cliente.cliente_id}`,
+              nombre: cliente.nombre,
+              celular: cliente.celular,
+              correo: "",
+              conversaciones: []
             }
-          }));
+          },
+          upsert: true
+        }
+      }));
 
-          const todasLasRelaciones = clientes.map(cliente => ({
-            cliente_id: cliente.cliente_id,
-            campanha_id: campanhaId
-          }));
+      const relacionesNuevas = clientesNuevosConId.map(cliente => ({
+        cliente_id: cliente.cliente_id,
+        campanha_id: campanhaId
+      }));
 
-          // 4️⃣ EJECUTAR TODO EN PARALELO EXTREMO
-          console.log(`🚀 Ejecutando operaciones masivas finales...`);
-          await Promise.all([
-            // MongoDB con configuración ultra rápida
-            operacionesMongo.length > 0 
-              ? db.collection("clientes").bulkWrite(operacionesMongo, { 
-                  ordered: false,
-                  writeConcern: { w: 0, j: false } // Sin journaling para máxima velocidad
-                })
-              : Promise.resolve(),
-            
-            // Relaciones con skipDuplicates
-            prisma.cliente_campanha.createMany({
-              data: todasLasRelaciones,
-              skipDuplicates: true
+      console.log(`🚀 Ejecutando operaciones para ${clientesNuevosConId.length} clientes nuevos...`);
+      await Promise.all([
+        // MongoDB solo para clientes nuevos
+        operacionesMongo.length > 0 
+          ? db.collection("clientes").bulkWrite(operacionesMongo, { 
+              ordered: false,
+              writeConcern: { w: 0, j: false }
             })
-          ]);
-
-          return clientes;
-        })
+          : Promise.resolve(),
+        
+        // Relaciones solo para clientes nuevos (SIN skipDuplicates porque ya filtramos)
+        relacionesNuevas.length > 0
+          ? prisma.cliente_campanha.createMany({
+              data: relacionesNuevas
+            })
+          : Promise.resolve()
       ]);
 
       const endTime = Date.now();
@@ -167,11 +193,13 @@ export async function POST(req, context) {
         gestor: cliente.gestor
       }));
 
-      console.log(`✅ Carga completada: ${clientesProcesados.length} clientes en ${totalTime}s`);
+      console.log(`✅ Carga completada: ${clientesNuevosConId.length} clientes nuevos procesados en ${totalTime}s`);
   
       return NextResponse.json({
-        message: `${clientesProcesados.length} clientes procesados en ${totalTime} segundos`,
+        message: `${clientesNuevosConId.length} clientes nuevos procesados en ${totalTime} segundos (${celularesYaEnCampanha.size} ya existían)`,
         clientes: clientesProcesados,
+        clientesNuevos: clientesNuevosConId.length,
+        clientesExistentes: celularesYaEnCampanha.size,
         tiempoTotal: `${totalTime}s`
       });
     } catch (error) {

@@ -69,7 +69,7 @@ model cliente {
   tipo_documento               String?            @db.VarChar(20)
   nombre                       String             @db.VarChar(100)
   apellido                     String?            @db.VarChar(100)
-  celular                      String             @db.VarChar(20)
+  celular                      String             @unique(map: "unique_celular") @db.VarChar(20)
   email                        String?            @unique(map: "email") @db.VarChar(100)
   fecha_creacion               DateTime?          @default(now()) @db.DateTime(0)
   fecha_ultima_interaccion     DateTime?          @db.DateTime(0)

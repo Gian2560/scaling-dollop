@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import clientPromise from "@/lib/mongodb";
+import clientPromise from "@/lib/mongodb"; // Importa la conexión persistente
 import twilio from "twilio";
 
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -12,20 +12,10 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
     }
 
-    // 🚀 NUEVO: Recibir lote de IDs de clientes desde el frontend
-    const body = await req.json();
-    const { clienteIds } = body; // Array de IDs de clientes para este lote
-
-    if (!clienteIds || !Array.isArray(clienteIds) || clienteIds.length === 0) {
-      return NextResponse.json({ error: "Se requiere un array de IDs de clientes" }, { status: 400 });
-    }
-
-    console.log(`📦 Procesando lote de ${clienteIds.length} clientes para campaña ${campaignId}`);
-
-    // Obtener la campaña con su template
+    // Obtener la campaña con su template y clientes asociados
     const campaign = await prisma.campanha.findUnique({
       where: { campanha_id: campaignId },
-      include: { template: true },
+      include: { template: true, cliente_campanha: { include: { cliente: true } } },
     });
 
     if (!campaign) {
@@ -36,54 +26,34 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "La campaña no tiene un template válido" }, { status: 400 });
     }
 
-    // 🚀 OPTIMIZACIÓN: Obtener solo los clientes del lote actual
-    const clientesLote = await prisma.cliente_campanha.findMany({
-      where: {
-        campanha_id: campaignId,
-        cliente_id: { in: clienteIds } // Solo los del lote actual
-      },
-      include: {
-        cliente: {
-          select: {
-            cliente_id: true,
-            celular: true,
-            nombre: true
-          }
-        }
-      }
-    });
-
-    if (clientesLote.length === 0) {
-      return NextResponse.json({ error: "No se encontraron clientes válidos en este lote" }, { status: 400 });
-    }
-
-    console.log(`🚀 Enviando mensajes a ${clientesLote.length} clientes del lote...`);
-
     const twilioWhatsAppNumber = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
 
-    // Obtener la conexión a MongoDB
+    // Obtener la conexión a MongoDB de clientPromise
     const mongoClient = await clientPromise;
     const db = mongoClient.db(process.env.MONGODB_DB);
+    const collection = db.collection("clientes");
+
+    // 🚀 OPTIMIZACIÓN ULTRA RÁPIDA: Procesar TODOS los envíos en paralelo masivo
+    console.log(`🔥 Enviando ${campaign.cliente_campanha.length} mensajes en PARALELO MASIVO...`);
     
-    // 🚀 PROCESAR EL LOTE EN PARALELO
-    const sendMessagePromises = clientesLote.map(async (clienteCampanha) => {
-      const { cliente, cliente_campanha_id } = clienteCampanha;
-      
+    // Preparar TODAS las operaciones de envío en paralelo
+    const promises = campaign.cliente_campanha.map(async ({ cliente, cliente_campanha_id }) => {
       if (!cliente || !cliente.celular) {
         console.warn(`⚠ Cliente ${cliente?.nombre || "Desconocido"} no tiene un número válido.`);
         return { to: cliente?.celular || "N/A", status: "skipped", error: "No hay número válido" };
       }
 
-      const celularFormatted = `whatsapp:${cliente.celular.trim()}`;
+      let celularFormatted = `whatsapp:${cliente.celular.trim()}`;
       const contentSid = campaign.template.template_content_sid;
-      const mensajeChatbot = campaign.template.mensaje;
-      
-      const messagePayload = {
+
+      let messagePayload = {
         from: twilioWhatsAppNumber,
         to: celularFormatted,
         contentSid,
+        statusCallback: "https://crmreactivaciones.vercel.app/api/twilio/status"
       };
 
+      // Si la plantilla tiene parámetros dinámicos, los agregamos al payload
       if (campaign.template.parametro) {
         messagePayload.contentVariables = JSON.stringify({
           1: cliente.nombre,
@@ -91,13 +61,13 @@ export async function POST(req, { params }) {
       }
 
       try {
-        // 📨 Enviar el mensaje con Twilio
+        // � ENVÍO PARALELO CON TWILIO
         const message = await client.messages.create(messagePayload);
         console.log(`✅ Mensaje enviado a ${cliente.celular}: ${message.sid}`);
-
-        // 🚀 ACTUALIZACIONES PARALELAS - MySQL y MongoDB
-        const updatePromises = [
-          // MySQL - actualizar estado del envío
+        
+        // 🚀 ACTUALIZACIONES PARALELAS - MySQL y MongoDB en paralelo
+        await Promise.all([
+          // MySQL update
           prisma.cliente_campanha.update({
             where: { cliente_campanha_id },
             data: {
@@ -107,8 +77,8 @@ export async function POST(req, { params }) {
             },
           }),
           
-          // MongoDB - guardar conversación
-          db.collection("clientes").updateOne(
+          // MongoDB update - ULTRA OPTIMIZADO
+          collection.updateOne(
             { celular: cliente.celular },
             {
               $setOnInsert: {
@@ -125,7 +95,7 @@ export async function POST(req, { params }) {
                   ultima_interaccion: new Date(),
                   interacciones: [{
                     fecha: new Date(),
-                    mensaje_chatbot: mensajeChatbot,
+                    mensaje_chatbot: campaign.template.mensaje,
                     mensaje_id: message.sid,
                   }],
                 }
@@ -133,44 +103,57 @@ export async function POST(req, { params }) {
             },
             { upsert: true }
           )
-        ];
+        ]);
 
-        await Promise.all(updatePromises);
         return { to: cliente.celular, status: "sent", sid: message.sid };
-        
       } catch (error) {
-        // 🚀 Registrar el fallo
-        prisma.cliente_campanha.update({
-          where: { cliente_campanha_id },
-          data: {
-            message_status: "failed",
-            last_update: new Date(),
-          },
-        }).catch(() => {}); // Silent fail
-
         console.error(`❌ Error al enviar mensaje a ${cliente.celular}:`, error);
+        
+        // 🚀 ERROR HANDLING RÁPIDO - Solo registrar en MongoDB sin bloquear
+        collection.updateOne(
+          { celular: cliente.celular },
+          {
+            $setOnInsert: {
+              id_cliente: `cli_${cliente.cliente_id}`,
+              nombre: cliente.nombre,
+              celular: cliente.celular,
+              correo: "",
+              conversaciones: []
+            },
+            $push: {
+              conversaciones: {
+                conversacion_id: `conv_${Date.now()}_${cliente.cliente_id}`,
+                estado: "fallido",
+                ultima_interaccion: new Date(),
+                interacciones: [{
+                  fecha: new Date(),
+                  mensaje_chatbot: campaign.template.mensaje,
+                  mensaje_id: null,
+                  estado: "fallido",
+                  error: error.message,
+                }],
+              }
+            }
+          },
+          { upsert: true }
+        ).catch(mongoError => {
+          console.error(`⚠️ Error en MongoDB para ${cliente.celular}:`, mongoError);
+        });
+
         return { to: cliente.celular, status: "failed", error: error.message };
       }
     });
 
-    // 🚀 ENVIAR TODOS LOS MENSAJES DEL LOTE EN PARALELO
-    const results = await Promise.allSettled(sendMessagePromises);
-    const sentMessages = results.map((res) =>
-      res.status === "fulfilled" ? res.value : { status: "error", error: res.reason }
-    );
+    // 🚀 ESPERAR TODOS LOS ENVÍOS EN PARALELO MASIVO
+    console.log(`⚡ Procesando ${promises.length} envíos en paralelo...`);
+    const sentMessages = await Promise.all(promises);
     
     const exitosos = sentMessages.filter(msg => msg.status === "sent").length;
     const fallidos = sentMessages.filter(msg => msg.status === "failed").length;
     
-    console.log(`✅ LOTE COMPLETADO: ${exitosos} enviados, ${fallidos} fallidos`);
-    
-    return NextResponse.json({ 
-      success: true, 
-      loteSize: clientesLote.length,
-      exitosos,
-      fallidos,
-      sentMessages 
-    });
+    console.log(`✅ ENVÍO MASIVO COMPLETADO: ${exitosos} exitosos, ${fallidos} fallidos`);
+
+    return NextResponse.json({ success: true, sentMessages });
   } catch (error) {
     console.error("❌ Error en el envío de mensajes con Twilio:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });

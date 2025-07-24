@@ -67,103 +67,15 @@ export const removeClientFromCampaign = async (id, clientId) => {
     }
   };
 
-// 🚀 NUEVO: Función para dividir en lotes (exportable)
-export function dividirEnLotes(array, tamañoLote) {
-  const lotes = [];
-  for (let i = 0; i < array.length; i += tamañoLote) {
-    lotes.push(array.slice(i, i + tamañoLote));
-  }
-  return lotes;
-}
-
-// 🚀 NUEVO: Función para obtener todos los IDs de clientes
-export const getClienteIds = async (campaignId) => {
-  try {
-    const response = await axiosInstance.get(`/campaings/${campaignId}/client-ids`);
-    return response.data;
-  } catch (error) {
-    console.error("❌ Error al obtener IDs de clientes:", error);
-    throw error;
-  }
-};
-
-// 🚀 OPTIMIZADO: Enviar mensajes por lotes
-export const sendCampaignMessages = async (campaignId) => {
-  try {
-    console.log(`🚀 Iniciando envío por lotes para campaña ${campaignId}...`);
-    
-    // 1. Obtener todos los IDs de clientes
-    const { clienteIds, totalClientes } = await getClienteIds(campaignId);
-    
-    if (!clienteIds || clienteIds.length === 0) {
-      throw new Error("No hay clientes en esta campaña");
+  export const sendCampaignMessages = async (campaignId) => {
+    try {
+      const response = await axiosInstance.post(`/campaings/${campaignId}/send`);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error al enviar campaña:", error);
+      throw error;
     }
-    
-    console.log(`📊 Total de clientes: ${totalClientes}`);
-    
-    // 2. Dividir en lotes de 100
-    const lotes = dividirEnLotes(clienteIds, 100);
-    console.log(`📦 Dividido en ${lotes.length} lotes de máximo 100 clientes`);
-    
-    const resultados = [];
-    let totalExitosos = 0;
-    let totalFallidos = 0;
-    
-    // 3. Enviar cada lote secuencialmente para evitar timeout
-    for (let i = 0; i < lotes.length; i++) {
-      const lote = lotes[i];
-      console.log(`📤 Enviando lote ${i + 1}/${lotes.length} (${lote.length} clientes)...`);
-      
-      try {
-        const response = await axiosInstance.post(`/campaings/${campaignId}/send`, {
-          clienteIds: lote
-        });
-        
-        const { exitosos, fallidos, loteSize } = response.data;
-        totalExitosos += exitosos;
-        totalFallidos += fallidos;
-        
-        resultados.push({
-          lote: i + 1,
-          enviados: exitosos,
-          fallidos: fallidos,
-          total: loteSize
-        });
-        
-        console.log(`✅ Lote ${i + 1} completado: ${exitosos} enviados, ${fallidos} fallidos`);
-        
-        // Pequeña pausa entre lotes para no saturar
-        if (i < lotes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        
-      } catch (error) {
-        console.error(`❌ Error en lote ${i + 1}:`, error);
-        resultados.push({
-          lote: i + 1,
-          error: error.message,
-          total: lote.length
-        });
-        totalFallidos += lote.length;
-      }
-    }
-    
-    console.log(`🎉 ENVÍO COMPLETADO: ${totalExitosos} exitosos, ${totalFallidos} fallidos`);
-    
-    return {
-      success: true,
-      totalClientes,
-      totalExitosos,
-      totalFallidos,
-      lotes: lotes.length,
-      resultados
-    };
-    
-  } catch (error) {
-    console.error("❌ Error al enviar campaña:", error);
-    throw error;
-  }
-};
+  };
 
  
 export const getGestores = async () => {

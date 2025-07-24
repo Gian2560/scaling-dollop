@@ -11,7 +11,7 @@ import {
 import CustomDataGrid from "@/app/components/CustomDataGrid";
 import * as XLSX from "xlsx";
 import { ArrowBack, UploadFile, Send, Delete } from "@mui/icons-material";
-import { addClientesACampanha, getClientesPorGestor, getGestores, dividirEnLotes } from "../../../../services/campaignService";
+import { addClientesACampanha, getClientesPorGestor, getGestores } from "../../../../services/campaignService";
 import axiosInstance from "../../../../services/api";
 
 const CampaignDetailPage = () => {
@@ -37,7 +37,6 @@ const CampaignDetailPage = () => {
     setPagination,
     clients: campaignClients,
     loading,
-    sendingMessages, // 🚀 Nuevo estado de envío
     error,
     fetchCampaignDetail,
     handleRemoveClient,
@@ -101,6 +100,13 @@ const CampaignDetailPage = () => {
     setFilteredClients(clientes);
     setSelectedClientIds([]); // resetear selección
   };
+  function dividirEnLotes(array, tamañoLote) {
+    const lotes = [];
+    for (let i = 0; i < array.length; i += tamañoLote) {
+      lotes.push(array.slice(i, i + tamañoLote));
+    }
+    return lotes;
+  }
 
 
 
@@ -157,11 +163,10 @@ const CampaignDetailPage = () => {
             <Button
               variant="contained"
               onClick={handleSendCampaign}
-              disabled={sendingMessages} // 🚀 Deshabilitar durante envío
               sx={{ backgroundColor: "#388e3c", "&:hover": { backgroundColor: "#00600f" } }}
-              startIcon={sendingMessages ? <CircularProgress size={20} color="inherit" /> : <Send />}
+              startIcon={<Send />}
             >
-              {sendingMessages ? "Enviando por lotes..." : "Enviar Mensajes"}
+              Enviar Mensajes
             </Button>
             <Button
               variant="contained"
@@ -290,11 +295,7 @@ const CampaignDetailPage = () => {
               <Button
                 onClick={async () => {
                   try {
-                    // 🚀 Usar la función para dividir en lotes
-                    const lotes = dividirEnLotes(selectedClientIds, 100);
-                    
-                    console.log(`� Dividiendo ${selectedClientIds.length} clientes en ${lotes.length} lotes`);
-                    
+                    const lotes = dividirEnLotes(selectedClientIds, 100); // 🔁 Lotes de 100 clientes
                     for (const lote of lotes) {
                       await axiosInstance.post(`/campaings/add-clients/${campaignId}`, {
                         clientIds: lote,
@@ -302,8 +303,8 @@ const CampaignDetailPage = () => {
                     }
 
                     setOpenSelectModal(false);
-                    fetchCampaignDetail();
-                    alert(`✅ ${selectedClientIds.length} clientes agregados por lotes.`);
+                    fetchCampaignDetail(); // Refresca la vista de campaña
+                    alert("✅ Clientes agregados por lotes.");
                   } catch (err) {
                     console.error("❌ Error al agregar clientes por gestor:", err);
                     alert("❌ Error al agregar clientes. Revisa consola.");

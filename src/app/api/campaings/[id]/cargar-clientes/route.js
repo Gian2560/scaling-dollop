@@ -112,30 +112,32 @@ export async function POST(req, context) {
 
       console.log(`🚀 Procesando ${clientesNuevosParaCampanha.length} clientes nuevos de ${clientesValidos.length} total`);
 
-      // 1️⃣ CREAR SOLO CLIENTES NUEVOS PARA LA CAMPAÑA
-      const datosClientesNuevos = clientesNuevosParaCampanha.map(cliente => ({
-        celular: cliente.numero,
-        nombre: cliente.nombre,
-        documento_identidad: "",
-        tipo_documento: "Desconocido",
-        estado: "no contactado",
-        gestor: cliente.asesor || ""
-      }));
+      // 1️⃣ UPSERT: Crear o actualizar clientes usando celular como clave única
+      console.log(`🔥 Procesando ${clientesNuevosParaCampanha.length} clientes con UPSERT...`);
+      
+      const upsertPromises = clientesNuevosParaCampanha.map(cliente => 
+        prisma.cliente.upsert({
+          where: { celular: cliente.numero },
+          update: {
+            // Solo actualizar asesor si cambió
+            gestor: cliente.asesor || ""
+          },
+          create: {
+            celular: cliente.numero,
+            nombre: cliente.nombre,
+            documento_identidad: "",
+            tipo_documento: "Desconocido",
+            estado: "no contactado",
+            gestor: cliente.asesor || ""
+          }
+        })
+      );
 
-      console.log(`🔥 Creando ${datosClientesNuevos.length} clientes nuevos en MySQL...`);
-      await prisma.cliente.createMany({
-        data: datosClientesNuevos,
-        skipDuplicates: true
-      });
+      // Ejecutar todos los upserts en paralelo
+      const clientesNuevosConId = await Promise.all(upsertPromises);
+      console.log(`✅ ${clientesNuevosConId.length} clientes procesados con UPSERT`);
 
-      // 2️⃣ OBTENER IDs SOLO DE LOS CLIENTES NUEVOS
-      console.log(`🔍 Obteniendo IDs de clientes nuevos...`);
-      const clientesNuevosConId = await prisma.cliente.findMany({
-        where: { celular: { in: clientesNuevosParaCampanha.map(c => c.numero) } },
-        select: { cliente_id: true, celular: true, nombre: true, gestor: true }
-      });
-
-      // 3️⃣ OPERACIONES PARALELAS SOLO PARA CLIENTES NUEVOS
+      // 2️⃣ OPERACIONES PARALELAS SOLO PARA CLIENTES NUEVOS
       const operacionesMongo = clientesNuevosConId.map(cliente => ({
         updateOne: {
           filter: { celular: cliente.celular },
@@ -157,7 +159,7 @@ export async function POST(req, context) {
         campanha_id: campanhaId
       }));
 
-      console.log(`🚀 Ejecutando operaciones para ${clientesNuevosConId.length} clientes nuevos...`);
+      console.log(`🚀 Ejecutando operaciones para ${clientesNuevosConId.length} clientes...`);
       await Promise.all([
         // MongoDB solo para clientes nuevos
         operacionesMongo.length > 0 

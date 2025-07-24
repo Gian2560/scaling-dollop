@@ -90,7 +90,7 @@ export async function POST(req, context) {
       console.log(`� Procesando ${clientesValidos.length} clientes con BATCH UPSERT...`);
       
       // Dividir en chunks para evitar timeouts
-      const CHUNK_SIZE = 500;
+      const CHUNK_SIZE = 4000;
       const chunks = [];
       for (let i = 0; i < clientesValidos.length; i += CHUNK_SIZE) {
         chunks.push(clientesValidos.slice(i, i + CHUNK_SIZE));
@@ -143,20 +143,7 @@ export async function POST(req, context) {
           campanha_id: campanhaId
         }));
 
-        // 🔧 VERIFICAR RELACIONES EXISTENTES PARA ESTE CHUNK
-        const clienteIdsChunk = clientesChunk.map(c => c.cliente_id);
-        const relacionesExistentesChunk = await prisma.cliente_campanha.findMany({
-          where: {
-            campanha_id: campanhaId,
-            cliente_id: { in: clienteIdsChunk }
-          },
-          select: { cliente_id: true }
-        });
-        
-        const idsYaExistentes = new Set(relacionesExistentesChunk.map(r => r.cliente_id));
-        const relacionesNuevas = relacionesChunk.filter(r => !idsYaExistentes.has(r.cliente_id));
-
-        // Ejecutar MongoDB y relaciones en paralelo
+        // Ejecutar MongoDB y relaciones en paralelo ULTRA RÁPIDO
         await Promise.all([
           operacionesMongoChunk.length > 0 
             ? db.collection("clientes").bulkWrite(operacionesMongoChunk, { 
@@ -165,10 +152,14 @@ export async function POST(req, context) {
               })
             : Promise.resolve(),
           
-          // Solo crear relaciones nuevas
-          relacionesNuevas.length > 0 
+          // Crear relaciones con try/catch silencioso para duplicados
+          relacionesChunk.length > 0 
             ? prisma.cliente_campanha.createMany({
-                data: relacionesNuevas
+                data: relacionesChunk,
+                skipDuplicates: true
+              }).catch(() => {
+                // Ignore duplicates silently
+                console.log(`⚠️ Algunas relaciones ya existían en chunk ${i + 1}`);
               })
             : Promise.resolve()
         ]);

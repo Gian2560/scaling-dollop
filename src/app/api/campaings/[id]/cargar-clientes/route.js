@@ -55,115 +55,106 @@ export async function POST(req, context) {
         return NextResponse.json({ error: "El archivo está vacío o no tiene formato válido" }, { status: 400 });
       }
   
-      console.log("📌 Clientes cargados desde archivo:", clientes);
-  
-      const clientesProcesados = [];
+      console.log(`📌 Clientes cargados desde archivo: ${clientes.length} registros`);
+
+      // 🚀 OPTIMIZACIÓN 1: Normalizar y filtrar clientes válidos de una vez
+      const clientesValidos = clientes
+        .filter(cliente => cliente.Numero && cliente.Nombre)
+        .map(cliente => {
+          let numero = String(cliente.Numero).trim();
+          if (!numero.startsWith("+51")) {
+            numero = `+51${numero}`;
+          }
+          return {
+            numero,
+            nombre: cliente.Nombre,
+            asesor: cliente.Asesor
+          };
+        });
+
+      if (clientesValidos.length === 0) {
+        return NextResponse.json({ error: "No hay clientes válidos en el archivo" }, { status: 400 });
+      }
+
+      console.log(`📌 Clientes válidos para procesar: ${clientesValidos.length}`);
+
+      // 🚀 ULTRA OPTIMIZACIÓN: Operaciones directas sin búsquedas previas
       const mongoClient = await clientPromise;
       const db = mongoClient.db(process.env.MONGODB_DB);
-      const existingClientesMongo = await db.collection("clientes").find({
-        celular: { $in: clientes.map(cliente => `+51${String(cliente.Numero).trim()}`) }
-      }).toArray();
-  
-      const clienteCeld = existingClientesMongo.map(cliente => cliente.celular);  // Lista de clientes ya existentes en MongoDB.
-  
-      const promises = clientes.map(async cliente => {
-        let { Numero, Nombre, Asesor } = cliente;
-        if (!Numero || !Nombre) {
-          console.warn("❗ Cliente omitido por datos faltantes:", cliente);
-          return;
-        }
-  
-        Numero = String(Numero).trim();
-        if (!Numero.startsWith("+51")) {
-          Numero = `+51${Numero}`;
-        }
-  
-        console.log(`🔍 Buscando cliente con número: ${Numero}`);
-  
-        // Consultamos si el cliente ya existe en MySQL
-        let clienteExistente = await prisma.cliente.findFirst({
-          where: { celular: Numero },
-        });
-  
-        // Verificar si el cliente ya existe en MongoDB
-        let clienteMongo = existingClientesMongo.find(client => client.celular === Numero);
-  
-        // Si el cliente NO existe en MySQL, crearlo
-        if (!clienteExistente) {
-          console.log(`🔹 Cliente no encontrado en MySQL, creando nuevo: ${Nombre}`);
-          try {
-            clienteExistente = await prisma.cliente.create({
-              data: {
-                celular: Numero,
-                nombre: Nombre,
-                documento_identidad: "",
-                tipo_documento: "Desconocido",
-                estado: "no contactado",
-                gestor: Asesor, 
-              },
-            });
-            console.log(`✅ Cliente creado en MySQL con ID: ${clienteExistente.cliente_id}`);
-          } catch (err) {
-            console.error("❌ Error al crear cliente en MySQL:", err);
-            return;
-          }
-        }
-  
-        // Si el cliente NO existe en MongoDB, crearlo
-        if (!clienteMongo) {
-          console.log(`🔹 Cliente no encontrado en MongoDB, creando nuevo: ${Nombre}`);
-          try {
-            const nuevoClienteMongo = {
-              id_cliente: `cli_${clienteExistente.cliente_id}`,
-              nombre: Nombre,
-              celular: Numero,
-              correo: "",
-              conversaciones: [], // Inicialmente sin conversaciones
-            };
-            await db.collection("clientes").insertOne(nuevoClienteMongo);
-            console.log(`✅ Cliente creado en MongoDB con ID: cli_${clienteExistente.cliente_id}`);
-          } catch (err) {
-            console.error("❌ Error al crear cliente en MongoDB:", err);
-            return;
-          }
-        }
-  
-        // Verificar si el cliente ya está en la campaña
-        let clienteCampanhaExistente = await prisma.cliente_campanha.findFirst({
-          where: {
-            cliente_id: clienteExistente.cliente_id,
-            campanha_id: campanhaId,
-          },
-        });
-  
-        if (!clienteCampanhaExistente) {
-          console.log(`🔹 Cliente ${clienteExistente.cliente_id} no está en la campaña, agregando...`);
-          try {
-            await prisma.cliente_campanha.create({
-              data: {
-                cliente_id: clienteExistente.cliente_id,
-                campanha_id: campanhaId,
-              },
-            });
-            console.log(`✅ Cliente ${clienteExistente.cliente_id} agregado a campaña ${campanhaId}`);
-          } catch (err) {
-            console.error("❌ Error al agregar cliente a campaña:", err);
-            return;
-          }
-        }
-  
-        clientesProcesados.push({
-          cliente_id: clienteExistente.cliente_id,
-          nombre: clienteExistente.nombre,
-          celular: clienteExistente.celular,
-          gestor: clienteExistente.gestor
-        });
+
+      // 1️⃣ Crear/actualizar todos los clientes en MySQL usando createMany con skipDuplicates
+      console.log(`🔹 Insertando/actualizando ${clientesValidos.length} clientes en MySQL...`);
+      
+      const datosClientesMysql = clientesValidos.map(cliente => ({
+        celular: cliente.numero,
+        nombre: cliente.nombre,
+        documento_identidad: "",
+        tipo_documento: "Desconocido",
+        estado: "no contactado",
+        gestor: cliente.asesor || ""
+      }));
+
+      // Crear clientes, ignorando duplicados
+      await prisma.cliente.createMany({
+        data: datosClientesMysql,
+        skipDuplicates: true
       });
-  
-      // Esperar que todas las promesas se resuelvan
-      await Promise.all(promises);
-  
-      console.log(`✅ Carga de clientes completada con éxito. Total procesados: ${clientesProcesados.length}`);
+
+      console.log(`✅ Clientes procesados en MySQL`);
+
+      // 2️⃣ Obtener todos los clientes que acabamos de procesar para obtener sus IDs
+      const clientesConId = await prisma.cliente.findMany({
+        where: { 
+          celular: { in: clientesValidos.map(c => c.numero) } 
+        },
+        select: { cliente_id: true, celular: true, nombre: true, gestor: true }
+      });
+
+      console.log(`✅ ${clientesConId.length} clientes obtenidos con IDs`);
+
+      // 3️⃣ Upsert masivo en MongoDB usando bulkWrite
+      const operacionesMongo = clientesConId.map(cliente => ({
+        updateOne: {
+          filter: { celular: cliente.celular },
+          update: {
+            $setOnInsert: {
+              id_cliente: `cli_${cliente.cliente_id}`,
+              nombre: cliente.nombre,
+              celular: cliente.celular,
+              correo: "",
+              conversaciones: []
+            }
+          },
+          upsert: true
+        }
+      }));
+
+      if (operacionesMongo.length > 0) {
+        console.log(`🔹 Ejecutando ${operacionesMongo.length} operaciones upsert en MongoDB...`);
+        await db.collection("clientes").bulkWrite(operacionesMongo, { ordered: false });
+        console.log(`✅ Operaciones upsert completadas en MongoDB`);
+      }
+
+      // 4️⃣ Crear relaciones campaña-cliente usando createMany con skipDuplicates
+      const relacionesCampanha = clientesConId.map(cliente => ({
+        cliente_id: cliente.cliente_id,
+        campanha_id: campanhaId
+      }));
+
+      console.log(`🔹 Creando ${relacionesCampanha.length} relaciones campaña-cliente...`);
+      await prisma.cliente_campanha.createMany({
+        data: relacionesCampanha,
+        skipDuplicates: true
+      });
+      console.log(`✅ Relaciones campaña-cliente creadas`);
+
+      // 5️⃣ Preparar respuesta
+      const clientesProcesados = clientesConId.map(cliente => ({
+        cliente_id: cliente.cliente_id,
+        nombre: cliente.nombre,
+        celular: cliente.celular,
+        gestor: cliente.gestor
+      }));      console.log(`✅ Carga de clientes completada con éxito. Total procesados: ${clientesProcesados.length}`);
   
       return NextResponse.json({
         message: `Clientes procesados con éxito en la campaña ${campanhaId}`,

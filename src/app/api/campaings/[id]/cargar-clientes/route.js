@@ -90,7 +90,7 @@ export async function POST(req, context) {
       console.log(`� Procesando ${clientesValidos.length} clientes con BATCH UPSERT...`);
       
       // Dividir en chunks para evitar timeouts
-      const CHUNK_SIZE = 4000;
+      const CHUNK_SIZE = 2000;
       const chunks = [];
       for (let i = 0; i < clientesValidos.length; i += CHUNK_SIZE) {
         chunks.push(clientesValidos.slice(i, i + CHUNK_SIZE));

@@ -7,16 +7,6 @@ const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 export async function POST(req, { params }) {
   try {
-    // 🔍 VALIDAR CONFIGURACIÓN DE TWILIO
-    if (!process.env.TWILIO_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-      console.error("❌ Faltan variables de entorno de Twilio:", {
-        TWILIO_SID: !!process.env.TWILIO_SID,
-        TWILIO_AUTH_TOKEN: !!process.env.TWILIO_AUTH_TOKEN,
-        TWILIO_PHONE_NUMBER: !!process.env.TWILIO_PHONE_NUMBER
-      });
-      return NextResponse.json({ error: "Configuración de Twilio incompleta" }, { status: 500 });
-    }
-
     const campaignId = parseInt(params.id, 10);
     if (isNaN(campaignId)) {
       return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
@@ -92,7 +82,6 @@ export async function POST(req, { params }) {
         from: twilioWhatsAppNumber,
         to: celularFormatted,
         contentSid,
-        statusCallback: "https://crmreactivaciones.vercel.app/api/twilio/status"
       };
 
       if (campaign.template.parametro) {
@@ -102,16 +91,7 @@ export async function POST(req, { params }) {
       }
 
       try {
-        // � DEBUGGING: Log del payload que se va a enviar
-        console.log(`📤 Enviando mensaje a ${cliente.celular}:`, {
-          from: messagePayload.from,
-          to: messagePayload.to,
-          contentSid: messagePayload.contentSid,
-          hasVariables: !!messagePayload.contentVariables,
-          variables: messagePayload.contentVariables
-        });
-
-        // �📨 Enviar el mensaje con Twilio
+        // 📨 Enviar el mensaje con Twilio
         const message = await client.messages.create(messagePayload);
         console.log(`✅ Mensaje enviado a ${cliente.celular}: ${message.sid}`);
 
@@ -159,16 +139,6 @@ export async function POST(req, { params }) {
         return { to: cliente.celular, status: "sent", sid: message.sid };
         
       } catch (error) {
-        // 🚀 LOGGING DETALLADO DEL ERROR
-        console.error(`❌ Error detallado al enviar mensaje a ${cliente.celular}:`, {
-          errorMessage: error.message,
-          errorCode: error.code,
-          errorStatus: error.status,
-          moreInfo: error.moreInfo,
-          details: error.details,
-          payload: messagePayload
-        });
-
         // 🚀 Registrar el fallo
         prisma.cliente_campanha.update({
           where: { cliente_campanha_id },
@@ -178,51 +148,27 @@ export async function POST(req, { params }) {
           },
         }).catch(() => {}); // Silent fail
 
-        return { 
-          to: cliente.celular, 
-          status: "failed", 
-          error: error.message,
-          errorCode: error.code,
-          errorDetails: error.details
-        };
+        console.error(`❌ Error al enviar mensaje a ${cliente.celular}:`, error);
+        return { to: cliente.celular, status: "failed", error: error.message };
       }
     });
 
     // 🚀 ENVIAR TODOS LOS MENSAJES DEL LOTE EN PARALELO
     const results = await Promise.allSettled(sendMessagePromises);
-    const sentMessages = results.map((res, index) => {
-      if (res.status === "fulfilled") {
-        return res.value;
-      } else {
-        console.error(`❌ Error en cliente ${index}:`, res.reason);
-        return { status: "error", error: res.reason?.message || res.reason };
-      }
-    });
+    const sentMessages = results.map((res) =>
+      res.status === "fulfilled" ? res.value : { status: "error", error: res.reason }
+    );
     
     const exitosos = sentMessages.filter(msg => msg.status === "sent").length;
-    const fallidos = sentMessages.filter(msg => msg.status === "failed" || msg.status === "error").length;
-    const omitidos = sentMessages.filter(msg => msg.status === "skipped").length;
+    const fallidos = sentMessages.filter(msg => msg.status === "failed").length;
     
-    console.log(`✅ LOTE COMPLETADO: ${exitosos} enviados, ${fallidos} fallidos, ${omitidos} omitidos`);
-    
-    // 🚀 LOGGING DETALLADO para debugging
-    console.log("📊 Detalles de envío:", {
-      total: clientesLote.length,
-      exitosos,
-      fallidos,
-      omitidos,
-      errores: sentMessages.filter(msg => msg.status === "failed" || msg.status === "error").map(msg => ({
-        to: msg.to,
-        error: msg.error
-      }))
-    });
+    console.log(`✅ LOTE COMPLETADO: ${exitosos} enviados, ${fallidos} fallidos`);
     
     return NextResponse.json({ 
       success: true, 
       loteSize: clientesLote.length,
       exitosos,
       fallidos,
-      omitidos,
       sentMessages 
     });
   } catch (error) {

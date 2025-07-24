@@ -119,18 +119,15 @@ export const sendCampaignMessages = async (campaignId) => {
           clienteIds: lote
         });
         
-        const { exitosos, fallidos, omitidos, loteSize } = response.data;
+        const { exitosos, fallidos, loteSize } = response.data;
         totalExitosos += exitosos;
         totalFallidos += fallidos;
-        const totalOmitidos = omitidos || 0;
         
         resultados.push({
           lote: i + 1,
           enviados: exitosos,
           fallidos: fallidos,
-          omitidos: totalOmitidos,
-          total: loteSize,
-          detalles: response.data.sentMessages?.filter(msg => msg.status === "failed" || msg.status === "error")
+          total: loteSize
         });
         
         console.log(`✅ Lote ${i + 1} completado: ${exitosos} enviados, ${fallidos} fallidos`);

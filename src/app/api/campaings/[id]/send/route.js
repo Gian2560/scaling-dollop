@@ -57,6 +57,7 @@ export async function POST(req, { params }) {
         from: twilioWhatsAppNumber,
         to: celularFormatted,
         contentSid,
+        statusCallback: "https://crmreactivaciones.vercel.app/api/twilio/status"
       };
 
       // Si la plantilla tiene parámetros dinámicos, los agregamos al payload

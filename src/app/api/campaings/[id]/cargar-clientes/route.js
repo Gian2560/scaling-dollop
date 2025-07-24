@@ -82,90 +82,77 @@ export async function POST(req, context) {
 
       console.log(`⚡ MODO ULTRA RAPIDO: ${clientesValidos.length} clientes`);
 
-      // 🚀 MÁXIMA VELOCIDAD: Sin verificaciones previas, solo operaciones batch
+      // 🚀 ULTRA VELOCIDAD: Sin verificaciones, operaciones masivas directas
       const mongoClient = await clientPromise;
       const db = mongoClient.db(process.env.MONGODB_DB);
 
-      // 1️⃣ UPSERT BATCH ULTRA RÁPIDO usando transacciones
-      console.log(`� Procesando ${clientesValidos.length} clientes con BATCH UPSERT...`);
+      // 1️⃣ MEGA BATCH: Crear TODOS los clientes de una vez (sin chunks)
+      const todosLosDatos = clientesValidos.map(cliente => ({
+        celular: cliente.numero,
+        nombre: cliente.nombre,
+        documento_identidad: "",
+        tipo_documento: "Desconocido",
+        estado: "no contactado",
+        gestor: cliente.asesor || ""
+      }));
+
+      console.log(`🔥 Creando ${todosLosDatos.length} clientes en MySQL...`);
       
-      // Dividir en chunks para evitar timeouts
-      const CHUNK_SIZE = 2000;
-      const chunks = [];
-      for (let i = 0; i < clientesValidos.length; i += CHUNK_SIZE) {
-        chunks.push(clientesValidos.slice(i, i + CHUNK_SIZE));
-      }
-
-      let todosClientesCreados = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        console.log(`� Procesando chunk ${i + 1}/${chunks.length} (${chunk.length} clientes)...`);
-
-        // UPSERT batch usando transacciones para máxima velocidad
-        const upsertPromises = chunk.map(cliente => 
-          prisma.cliente.upsert({
-            where: { celular: cliente.numero },
-            update: { gestor: cliente.asesor || "" },
-            create: {
-              celular: cliente.numero,
-              nombre: cliente.nombre,
-              documento_identidad: "",
-              tipo_documento: "Desconocido",
-              estado: "no contactado",
-              gestor: cliente.asesor || ""
+      // 2️⃣ OBTENER IDs y OPERACIONES MASIVAS EN PARALELO
+      const [_, todosClientesConId] = await Promise.all([
+        // Crear clientes en MySQL
+        prisma.cliente.createMany({
+          data: todosLosDatos,
+          skipDuplicates: true
+        }),
+        // Obtener todos los IDs de una vez (después de crear)
+        prisma.cliente.findMany({
+          where: { celular: { in: clientesValidos.map(c => c.numero) } },
+          select: { cliente_id: true, celular: true, nombre: true, gestor: true }
+        }).then(async (clientes) => {
+          // 3️⃣ MIENTRAS OBTENEMOS IDs, PREPARAR OPERACIONES MONGO
+          const operacionesMongo = clientes.map(cliente => ({
+            updateOne: {
+              filter: { celular: cliente.celular },
+              update: {
+                $setOnInsert: {
+                  id_cliente: `cli_${cliente.cliente_id}`,
+                  nombre: cliente.nombre,
+                  celular: cliente.celular,
+                  correo: "",
+                  conversaciones: []
+                }
+              },
+              upsert: true
             }
-          })
-        );
+          }));
 
-        const clientesChunk = await Promise.all(upsertPromises);
-        todosClientesCreados.push(...clientesChunk);
+          const todasLasRelaciones = clientes.map(cliente => ({
+            cliente_id: cliente.cliente_id,
+            campanha_id: campanhaId
+          }));
 
-        // 2️⃣ OPERACIONES PARALELAS POR CHUNK
-        const operacionesMongoChunk = clientesChunk.map(cliente => ({
-          updateOne: {
-            filter: { celular: cliente.celular },
-            update: {
-              $setOnInsert: {
-                id_cliente: `cli_${cliente.cliente_id}`,
-                nombre: cliente.nombre,
-                celular: cliente.celular,
-                correo: "",
-                conversaciones: []
-              }
-            },
-            upsert: true
-          }
-        }));
+          // 4️⃣ EJECUTAR TODO EN PARALELO EXTREMO
+          console.log(`🚀 Ejecutando operaciones masivas finales...`);
+          await Promise.all([
+            // MongoDB con configuración ultra rápida
+            operacionesMongo.length > 0 
+              ? db.collection("clientes").bulkWrite(operacionesMongo, { 
+                  ordered: false,
+                  writeConcern: { w: 0, j: false } // Sin journaling para máxima velocidad
+                })
+              : Promise.resolve(),
+            
+            // Relaciones con skipDuplicates
+            prisma.cliente_campanha.createMany({
+              data: todasLasRelaciones,
+              skipDuplicates: true
+            })
+          ]);
 
-        const relacionesChunk = clientesChunk.map(cliente => ({
-          cliente_id: cliente.cliente_id,
-          campanha_id: campanhaId
-        }));
-
-        // Ejecutar MongoDB y relaciones en paralelo ULTRA RÁPIDO
-        await Promise.all([
-          operacionesMongoChunk.length > 0 
-            ? db.collection("clientes").bulkWrite(operacionesMongoChunk, { 
-                ordered: false,
-                writeConcern: { w: 0, j: false }
-              })
-            : Promise.resolve(),
-          
-          // Crear relaciones con try/catch silencioso para duplicados
-          relacionesChunk.length > 0 
-            ? prisma.cliente_campanha.createMany({
-                data: relacionesChunk,
-                skipDuplicates: true
-              }).catch(() => {
-                // Ignore duplicates silently
-                console.log(`⚠️ Algunas relaciones ya existían en chunk ${i + 1}`);
-              })
-            : Promise.resolve()
-        ]);
-
-        console.log(`✅ Chunk ${i + 1} completado`);
-      }
+          return clientes;
+        })
+      ]);
 
       const endTime = Date.now();
       const totalTime = (endTime - startTime) / 1000;
@@ -173,17 +160,17 @@ export async function POST(req, context) {
       console.log(`⚡ ULTRA VELOCIDAD completada en ${totalTime} segundos!`);
 
       // 5️⃣ Preparar respuesta
-      const clientesProcesados = todosClientesCreados.map(cliente => ({
+      const clientesProcesados = todosClientesConId.map(cliente => ({
         cliente_id: cliente.cliente_id,
         nombre: cliente.nombre,
         celular: cliente.celular,
         gestor: cliente.gestor
       }));
 
-      console.log(`✅ Carga completada: ${todosClientesCreados.length} clientes procesados en ${totalTime}s`);
+      console.log(`✅ Carga completada: ${clientesProcesados.length} clientes en ${totalTime}s`);
   
       return NextResponse.json({
-        message: `${todosClientesCreados.length} clientes procesados en ${totalTime} segundos`,
+        message: `${clientesProcesados.length} clientes procesados en ${totalTime} segundos`,
         clientes: clientesProcesados,
         tiempoTotal: `${totalTime}s`
       });

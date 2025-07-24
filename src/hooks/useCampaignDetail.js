@@ -11,6 +11,7 @@ const useCampaignDetail = (id) => {
   const [campaign, setCampaign] = useState(null);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sendingMessages, setSendingMessages] = useState(false); // 🚀 Nuevo estado
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0 });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -59,6 +60,7 @@ const useCampaignDetail = (id) => {
     campaign,
     clients,
     loading,
+    sendingMessages, // 🚀 Exportar nuevo estado
     error,
     pagination,
     setPagination,
@@ -76,15 +78,29 @@ const useCampaignDetail = (id) => {
       fetchCampaignDetail();
     },
     handleSendCampaign: async () => {
+      setSendingMessages(true); // 🚀 Activar estado de carga
       try {
-        await sendCampaignMessages(id);
-        setSnackbarMessage("Mensajes enviados correctamente!");
+        setSnackbarMessage("🚀 Iniciando envío por lotes...");
+        setSnackbarSeverity("info");
+        setSnackbarOpen(true);
+        
+        const resultado = await sendCampaignMessages(id);
+        
+        const mensaje = `🎉 Envío completado! 
+        Total: ${resultado.totalClientes} clientes
+        ✅ Exitosos: ${resultado.totalExitosos}
+        ❌ Fallidos: ${resultado.totalFallidos}
+        📦 Lotes procesados: ${resultado.lotes}`;
+        
+        setSnackbarMessage(mensaje);
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
       } catch (err) {
-        setSnackbarMessage("Hubo un error al enviar los mensajes.");
+        setSnackbarMessage(`❌ Error al enviar mensajes: ${err.message}`);
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
+      } finally {
+        setSendingMessages(false); // 🚀 Desactivar estado de carga
       }
     },
     snackbar: (

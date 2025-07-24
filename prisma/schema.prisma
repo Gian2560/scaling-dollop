@@ -265,4 +265,5 @@ enum cliente_campanha_message_status {
   delivered
   undelivered
   failed
+  responded
 }

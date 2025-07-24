@@ -12,13 +12,16 @@ export async function POST(req, context) {
     try {
       console.log("📌 Iniciando carga de clientes...");
   
+      // 🚀 FIX Next.js: Await params primero
       const { params } = context;
-      if (!params || !params.id) {
+      const resolvedParams = await params;
+      
+      if (!resolvedParams || !resolvedParams.id) {
         console.error("❌ Error: ID de campaña no válido");
         return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
       }
   
-      const campanhaId = Number(params.id);
+      const campanhaId = Number(resolvedParams.id);
       if (isNaN(campanhaId)) {
         console.error("❌ Error: El ID de la campaña no es un número válido");
         return NextResponse.json({ error: "El ID de la campaña no es un número válido" }, { status: 400 });
@@ -78,78 +81,104 @@ export async function POST(req, context) {
 
       console.log(`📌 Clientes válidos para procesar: ${clientesValidos.length}`);
 
-      // 🚀 ULTRA OPTIMIZACIÓN: Operaciones directas sin búsquedas previas
+      // 🚀 ULTRA OPTIMIZACIÓN: Operaciones paralelas y chunks para máximo rendimiento
       const mongoClient = await clientPromise;
       const db = mongoClient.db(process.env.MONGODB_DB);
 
-      // 1️⃣ Crear/actualizar todos los clientes en MySQL usando createMany con skipDuplicates
-      console.log(`🔹 Insertando/actualizando ${clientesValidos.length} clientes en MySQL...`);
-      
-      const datosClientesMysql = clientesValidos.map(cliente => ({
-        celular: cliente.numero,
-        nombre: cliente.nombre,
-        documento_identidad: "",
-        tipo_documento: "Desconocido",
-        estado: "no contactado",
-        gestor: cliente.asesor || ""
-      }));
-
-      // Crear clientes, ignorando duplicados
-      await prisma.cliente.createMany({
-        data: datosClientesMysql,
-        skipDuplicates: true
+      // � VERIFICAR RELACIONES EXISTENTES UNA SOLA VEZ AL INICIO
+      console.log(`🔍 Verificando clientes ya asociados a la campaña ${campanhaId}...`);
+      const relacionesExistentes = await prisma.cliente_campanha.findMany({
+        where: { campanha_id: campanhaId },
+        select: { cliente_id: true }
       });
+      const clientesYaEnCampanha = new Set(relacionesExistentes.map(r => r.cliente_id));
+      console.log(`📌 ${clientesYaEnCampanha.size} clientes ya están en la campaña`);
 
-      console.log(`✅ Clientes procesados en MySQL`);
-
-      // 2️⃣ Obtener todos los clientes que acabamos de procesar para obtener sus IDs
-      const clientesConId = await prisma.cliente.findMany({
-        where: { 
-          celular: { in: clientesValidos.map(c => c.numero) } 
-        },
-        select: { cliente_id: true, celular: true, nombre: true, gestor: true }
-      });
-
-      console.log(`✅ ${clientesConId.length} clientes obtenidos con IDs`);
-
-      // 3️⃣ Upsert masivo en MongoDB usando bulkWrite
-      const operacionesMongo = clientesConId.map(cliente => ({
-        updateOne: {
-          filter: { celular: cliente.celular },
-          update: {
-            $setOnInsert: {
-              id_cliente: `cli_${cliente.cliente_id}`,
-              nombre: cliente.nombre,
-              celular: cliente.celular,
-              correo: "",
-              conversaciones: []
-            }
-          },
-          upsert: true
-        }
-      }));
-
-      if (operacionesMongo.length > 0) {
-        console.log(`🔹 Ejecutando ${operacionesMongo.length} operaciones upsert en MongoDB...`);
-        await db.collection("clientes").bulkWrite(operacionesMongo, { ordered: false });
-        console.log(`✅ Operaciones upsert completadas en MongoDB`);
+      // �📦 CHUNK SIZE para operaciones masivas (mejor para Vercel)
+      const CHUNK_SIZE = 1000;
+      const chunks = [];
+      for (let i = 0; i < clientesValidos.length; i += CHUNK_SIZE) {
+        chunks.push(clientesValidos.slice(i, i + CHUNK_SIZE));
       }
 
-      // 4️⃣ Crear relaciones campaña-cliente usando createMany con skipDuplicates
-      const relacionesCampanha = clientesConId.map(cliente => ({
-        cliente_id: cliente.cliente_id,
-        campanha_id: campanhaId
-      }));
+      console.log(`🔹 Procesando ${clientesValidos.length} clientes en ${chunks.length} chunks de ${CHUNK_SIZE}...`);
 
-      console.log(`🔹 Creando ${relacionesCampanha.length} relaciones campaña-cliente...`);
-      await prisma.cliente_campanha.createMany({
-        data: relacionesCampanha,
-        skipDuplicates: true
-      });
-      console.log(`✅ Relaciones campaña-cliente creadas`);
+      let todosClientesConId = [];
+
+      // 🚀 PROCESAR EN CHUNKS PARALELOS
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        console.log(`📦 Procesando chunk ${i + 1}/${chunks.length} (${chunk.length} clientes)...`);
+
+        // 1️⃣ MySQL: Crear clientes del chunk
+        const datosChunk = chunk.map(cliente => ({
+          celular: cliente.numero,
+          nombre: cliente.nombre,
+          documento_identidad: "",
+          tipo_documento: "Desconocido",
+          estado: "no contactado",
+          gestor: cliente.asesor || ""
+        }));
+
+        await prisma.cliente.createMany({
+          data: datosChunk,
+          skipDuplicates: true
+        });
+
+        // 2️⃣ Obtener IDs del chunk procesado
+        const clientesChunkConId = await prisma.cliente.findMany({
+          where: { celular: { in: chunk.map(c => c.numero) } },
+          select: { cliente_id: true, celular: true, nombre: true, gestor: true }
+        });
+
+        todosClientesConId.push(...clientesChunkConId);
+
+        // 3️⃣ MongoDB: Upsert del chunk (PARALELO)
+        const operacionesMongoChunk = clientesChunkConId.map(cliente => ({
+          updateOne: {
+            filter: { celular: cliente.celular },
+            update: {
+              $setOnInsert: {
+                id_cliente: `cli_${cliente.cliente_id}`,
+                nombre: cliente.nombre,
+                celular: cliente.celular,
+                correo: "",
+                conversaciones: []
+              }
+            },
+            upsert: true
+          }
+        }));
+
+        // 4️⃣ FILTRAR RELACIONES QUE NO EXISTEN
+        const relacionesNuevas = clientesChunkConId
+          .filter(cliente => !clientesYaEnCampanha.has(cliente.cliente_id))
+          .map(cliente => ({
+            cliente_id: cliente.cliente_id,
+            campanha_id: campanhaId
+          }));
+
+        console.log(`📌 Chunk ${i + 1}: ${relacionesNuevas.length}/${clientesChunkConId.length} relaciones nuevas`);
+
+        // 🚀 EJECUTAR MONGO Y RELACIONES EN PARALELO (solo las nuevas)
+        await Promise.all([
+          operacionesMongoChunk.length > 0 
+            ? db.collection("clientes").bulkWrite(operacionesMongoChunk, { ordered: false })
+            : Promise.resolve(),
+          relacionesNuevas.length > 0
+            ? prisma.cliente_campanha.createMany({
+                data: relacionesNuevas
+              })
+            : Promise.resolve()
+        ]);
+
+        console.log(`✅ Chunk ${i + 1} completado`);
+      }
+
+      console.log(`✅ Todos los chunks procesados. Total: ${todosClientesConId.length} clientes`);
 
       // 5️⃣ Preparar respuesta
-      const clientesProcesados = clientesConId.map(cliente => ({
+      const clientesProcesados = todosClientesConId.map(cliente => ({
         cliente_id: cliente.cliente_id,
         nombre: cliente.nombre,
         celular: cliente.celular,
@@ -169,8 +198,10 @@ export async function POST(req, context) {
 // 🔹 Obtener clientes de una campaña
 export async function GET(req, { params }) {
   try {
+    // 🚀 FIX Next.js: Await params primero
+    const resolvedParams = await params;
     const clientes = await prisma.cliente_campanha.findMany({
-      where: { campanha_id: parseInt(params.id) },
+      where: { campanha_id: parseInt(resolvedParams.id) },
       include: { cliente: true },
     });
 
@@ -183,9 +214,11 @@ export async function GET(req, { params }) {
 // 🔹 Eliminar cliente de campaña
 export async function DELETE(req, { params }) {
   try {
+    // 🚀 FIX Next.js: Await params primero
+    const resolvedParams = await params;
     const { cliente_id } = await req.json();
     await prisma.cliente_campanha.deleteMany({
-      where: { campanha_id: parseInt(params.id), cliente_id },
+      where: { campanha_id: parseInt(resolvedParams.id), cliente_id },
     });
 
     return NextResponse.json({ message: "Cliente eliminado" });

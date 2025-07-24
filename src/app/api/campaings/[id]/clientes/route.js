@@ -3,13 +3,17 @@ import prisma from "@/lib/prisma";
 
 export async function GET(req, { params }) {
   try {
+    // 🚀 FIX Next.js: Await params primero
+    const resolvedParams = await params;
+    const campanhaId = Number(resolvedParams.id);
+    
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
 
     // Obtener la campaña con detalles
     const campanha = await prisma.campanha.findUnique({
-      where: { campanha_id: Number(params.id) },
+      where: { campanha_id: campanhaId },
       include: {
         template: { select: { nombre_template: true, mensaje: true } }, // Template
       },
@@ -24,12 +28,12 @@ export async function GET(req, { params }) {
 
     // Contar total de clientes en la campaña
     const totalClientes = await prisma.cliente_campanha.count({
-      where: { campanha_id: parseInt(params.id) },
+      where: { campanha_id: campanhaId },
     });
 
     // Obtener clientes paginados
     const clientes = await prisma.cliente_campanha.findMany({
-      where: { campanha_id: parseInt(params.id) },
+      where: { campanha_id: campanhaId },
       include: { cliente: true },
       skip: (page - 1) * pageSize,
       take: pageSize,

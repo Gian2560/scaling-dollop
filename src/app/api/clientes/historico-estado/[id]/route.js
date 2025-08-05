@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET /api/clientes/historico-estado/:clienteId
+// GET /api/clientes/historico-estado/[id]
 export async function GET(req, { params }) {
   try {
-    const clienteId = parseInt(params.clienteId, 10);
+    // Espera opcional para pruebas (puedes quitar si no lo necesitas)
+    // await new Promise(res => setTimeout(res, 300));
+
+    const clienteId = parseInt(params.id, 10); // <-- usa params.id
     if (isNaN(clienteId)) {
       return NextResponse.json({ error: "ID de cliente no válido" }, { status: 400 });
     }
@@ -22,7 +25,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({ historico });
   } catch (error) {
-    console.error("Error en GET /api/clientes/historico-estado:", error);
+    console.error("Error en GET /api/clientes/historico-estado/[id]:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

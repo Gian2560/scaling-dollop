@@ -6,11 +6,18 @@ const prisma = new PrismaClient();
 // Función para obtener el estado del mensaje desde Twilio
 async function getTwilioMessageStatus(messageSid) {
   try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const accountSid = process.env.TWILIO_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
+    
+    console.log('Verificando credenciales Twilio:', {
+      accountSid: accountSid ? `${accountSid.substring(0, 8)}...` : 'NO CONFIGURADO',
+      authToken: authToken ? `${authToken.substring(0, 8)}...` : 'NO CONFIGURADO'
+    });
     
     if (!accountSid || !authToken) {
       console.error('Credenciales de Twilio no configuradas');
+      console.error('TWILIO_SID:', accountSid ? 'Configurado' : 'NO configurado');
+      console.error('TWILIO_AUTH_TOKEN:', authToken ? 'Configurado' : 'NO configurado');
       return null;
     }
 

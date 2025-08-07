@@ -13,7 +13,7 @@ import * as XLSX from "xlsx";
 import { ArrowBack, UploadFile, Send, Delete } from "@mui/icons-material";
 import { addClientesACampanha, getClientesPorGestor, getGestores } from "../../../../services/campaignService";
 import axiosInstance from "../../../../services/api";
-
+import ContactoStats from "@/app/components/ContactoStats";
 const CampaignDetailPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -337,6 +337,7 @@ const CampaignDetailPage = () => {
           )}
         </>
       )}
+      <ContactoStats campaignId={campaignId} />
     </Box>
   );
 };

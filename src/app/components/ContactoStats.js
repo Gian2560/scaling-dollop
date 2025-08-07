@@ -24,15 +24,16 @@ import ReplyIcon from '@mui/icons-material/Reply';
 import GroupIcon from '@mui/icons-material/Group';
 
 const ESTADO_COLORS = {
-  'Leído': '#1976d2',
-  'Entregado': '#2e7d32',
+  'Enviado': '#1976d2',
+  'Entregado': '#2e7d32', 
   'Fallido': '#d32f2f',
   'Respondido': '#5e35b1',
-  'Enviado': '#1976d2',
   'En cola': '#ff9800',
   'Enviando': '#00bcd4',
-  'Pendiente': '#9e9e9e',
   'Desconocido': '#616161',
+  // Estados antiguos para compatibilidad
+  'Leído': '#1976d2',
+  'Pendiente': '#9e9e9e',
 };
 
 // Función para obtener estadísticas de campaña

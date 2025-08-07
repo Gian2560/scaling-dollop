@@ -92,7 +92,7 @@ export default function ContactoStats({ campaignId }) {
   const kpiCards = [
     { title: 'Total Enviados', value: statsData.totalEnviados, icon: <CheckCircleIcon sx={{ color: '#1976d2', fontSize: 32 }} /> },
     { title: 'Entregados', value: statsData.entregados, icon: <CheckCircleIcon sx={{ color: '#2e7d32', fontSize: 32 }} /> },
-    { title: 'Leídos', value: statsData.leidos, icon: <VisibilityIcon sx={{ color: '#1976d2', fontSize: 32 }} /> },
+   // { title: 'Leídos', value: statsData.leidos, icon: <VisibilityIcon sx={{ color: '#1976d2', fontSize: 32 }} /> },
     { title: 'Fallidos', value: statsData.fallidos, icon: <ErrorIcon sx={{ color: '#d32f2f', fontSize: 32 }} /> },
     { title: 'Respondidos', value: statsData.respondidos, icon: <ReplyIcon sx={{ color: '#5e35b1', fontSize: 32 }} /> },
     { title: 'Clientes Contactados', value: statsData.clientesContactados, icon: <GroupIcon sx={{ color: '#ff9800', fontSize: 32 }} /> },
@@ -101,7 +101,7 @@ export default function ContactoStats({ campaignId }) {
   const funnelData = [
     { name: 'Enviados', value: statsData.totalEnviados },
     { name: 'Entregados', value: statsData.entregados },
-    { name: 'Leídos', value: statsData.leidos },
+   // { name: 'Leídos', value: statsData.leidos },
     { name: 'Respondidos', value: statsData.respondidos },
   ];
 

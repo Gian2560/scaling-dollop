@@ -141,6 +141,21 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
+
+        {session?.user?.role === "Administrador" && (<ListItem
+          button="true"
+          onClick={() => router.push("/templates")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <DashboardIcon />
+          </ListItemIcon>
+          <ListItemText primary="Plantillas" />
+        </ListItem>)}
         {/*
         <ListItem
           button="true"
@@ -187,7 +202,7 @@ export default function Layout({ children }) {
           <ListItemText primary="Promesas de Pago" />
         </ListItem>
 
-        {session?.user?.role === "administrador" && (
+        {session?.user?.role === "Administrador" && (
           <ListItem
             button="true"
             onClick={() => router.push("/campaigns")}
@@ -204,7 +219,7 @@ export default function Layout({ children }) {
           </ListItem>)
         }
 
-        {session?.user?.role === "administrador" && (
+        {session?.user?.role === "Administrador" && (
           <ListItem
             button="true"
             onClick={() => router.push("/usuarios")}

@@ -75,6 +75,8 @@ model cliente {
   in_out                       Boolean?           @default(false)
   score                        String             @default("no_score") @db.VarChar(20)
   fecha_ultimo_estado          DateTime?          @db.Timestamp(6)
+  Segmento                     String?
+  Codigo_Asociado              String?
   accion_comercial             accion_comercial[]
   cita                         cita[]
   cliente_campanha             cliente_campanha[]

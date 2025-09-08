@@ -38,7 +38,7 @@ export async function PUT(req, context) {
   try {
     const params = await context.params;  
     const { id } = params;
-    const { estado, accion, gestor, observaciones, fechaPromesaPago } = await req.json();
+    const { estado, accion, gestor, observaciones, fechaPromesaPago, motivo} = await req.json();
 
     // ✅ Actualizar el cliente en MySQL
     const updatedCliente = await prisma.cliente.update({
@@ -48,6 +48,7 @@ export async function PUT(req, context) {
         accion,
         gestor,
         observacion: observaciones,
+        motivo: motivo || null, // Asegurar que se envía null si está vacío
       },
     });
 

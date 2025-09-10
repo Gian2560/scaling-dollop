@@ -27,14 +27,19 @@ import { DataGrid } from "@mui/x-data-grid";
 
 export default function CampaignPage() {
   const [campaignName, setCampaignName] = useState("");
-  const [selectedDatabase, setSelectedDatabase] = useState("");
+  //const [selectedDatabase, setSelectedDatabase] = useState("");
+  const [selectedDatabase, setSelectedDatabase] = useState("BD_SegmentacionFinal");
   const [columns, setColumns] = useState([]);
   const [template, setTemplate] = useState("");
+  // const [clientSegment, setClientSegment] = useState("");
+  // const [cluster, setCluster] = useState("");
+  // const [strategy, setStrategy] = useState("");
+  // const [fecha, setFecha] = useState("");
+  // const [linea, setLinea] = useState("");
   const [clientSegment, setClientSegment] = useState("");
-  const [cluster, setCluster] = useState("");
-  const [strategy, setStrategy] = useState("");
-  const [fecha, setFecha] = useState("");
-  const [linea, setLinea] = useState("");
+  const [asesor, setAsesor] = useState("");
+  const [segments, setSegments] = useState([]);
+  const [asesores, setAsesores] = useState([]);
   const [tipoCampaña, setTipoCampaña] = useState("Fidelizacion");
   const [variable2, setVariable2] = useState("");
   const [sendDate, setSendDate] = useState(null);
@@ -52,7 +57,7 @@ export default function CampaignPage() {
   // Datos simulados
   const [databases, useDatabases] = useState([]);
 
-  const [segments, setSegments] = useState([]);
+  //const [segments, setSegments] = useState([]);
   const [clusters, setClusterValues] = useState([]);
   const [strategies, setStrategyValues] = useState([]);
   const [fechaCuotaColumn, setFechaCuotaColumnValues] = useState([]);
@@ -63,28 +68,50 @@ export default function CampaignPage() {
   const [variableMappings, setVariableMappings] = useState({})    // { "1": "nombre", "2": "telefono", … }
 
 
+  // useEffect(() => {
+  //   const fetchDatabases = async () => {
+  //     try {
+  //       const response = await axiosInstance.get("/bigquery"); // Solicitud GET al endpoint de bases de datos
+  //       console.log("Respuesta de BigQuery:", response.data);
+  //       useDatabases(response.data.tables); // Guarda las bases de datos en el estado 
+  //       console.log("Bases de datos obtenidas:", response.data);
+  //     } catch (error) {
+  //       console.error("Error al obtener bases de datos:", error);
+  //     }
+  //   }
+  //   const fetchTemplates = async () => {
+  //     try {
+  //       const response = await axiosInstance.get("/plantillas"); // Solicitud GET al endpoint de plantillas
+  //       setTemplates(response.data); // Guarda las plantillas en el estado
+  //       console.log("Plantillas obtenidas:", response.data);
+  //     } catch (error) {
+  //       console.error("Error al obtener plantillas:", error);
+  //     }
+  //   };
+  //   fetchDatabases();
+  //   fetchTemplates();
+  // }, []);
+  // Carga inicial: plantillas, filtros (segmento y asesor) y data inicial
   useEffect(() => {
-    const fetchDatabases = async () => {
+    const boot = async () => {
       try {
-        const response = await axiosInstance.get("/bigquery"); // Solicitud GET al endpoint de bases de datos
-        console.log("Respuesta de BigQuery:", response.data);
-        useDatabases(response.data.tables); // Guarda las bases de datos en el estado 
-        console.log("Bases de datos obtenidas:", response.data);
-      } catch (error) {
-        console.error("Error al obtener bases de datos:", error);
-      }
-    }
-    const fetchTemplates = async () => {
-      try {
-        const response = await axiosInstance.get("/plantillas"); // Solicitud GET al endpoint de plantillas
-        setTemplates(response.data); // Guarda las plantillas en el estado
-        console.log("Plantillas obtenidas:", response.data);
-      } catch (error) {
-        console.error("Error al obtener plantillas:", error);
+        setLoadingColumns(true);
+        const [tplRes, filtRes, initRes] = await Promise.all([
+          axiosInstance.get("/plantillas"),
+          axiosInstance.get("/bigquery/columns/filtros", { params: { database: "BD_SegmentacionFinal" } }),
+          axiosInstance.get("/bigquery/segmentacionfinal"),
+        ]);
+        setTemplates(tplRes.data || []);
+        setSegments(filtRes.data.segmentos || []);
+        setAsesores(filtRes.data.asesores || []);
+        setClients(initRes.data.rows || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoadingColumns(false);
       }
     };
-    fetchDatabases();
-    fetchTemplates();
+    boot();
   }, []);
 
   //GIAN
@@ -132,7 +159,7 @@ export default function CampaignPage() {
 
     try {
       // Enviar solicitud para crear la campaña
-      const response = await axiosInstance.post("/campaings/add-clients", campaignData);
+      const response = await axiosInstance.post("/campaings", campaignData);
 
       const campanhaId = response.data.campanha_id;  // Obtener el ID de la campaña creada
 
@@ -214,107 +241,144 @@ export default function CampaignPage() {
 
   // --- NUEVO: aplicar filtros y enviar al backend -----------------------------
   // ── NUEVO: arma el payload y envíalo ─────────────────────────────
-  const applyFilters = async () => {
-    if (!selectedDatabase) {
-      alert('Selecciona una base de datos antes de filtrar');
-      return;
-    }
+  // const applyFilters = async () => {
+  //   if (!selectedDatabase) {
+  //     alert('Selecciona una base de datos antes de filtrar');
+  //     return;
+  //   }
 
-    // Array que contendrá 0-3 filtros, según lo que elija el usuario
-    const filters = [];
+  //   // Array que contendrá 0-3 filtros, según lo que elija el usuario
+  //   const filters = [];
 
-    if (selectedColumns.segmento) {
-      filters.push({
-        type: 'segmentacion',
-        column: selectedColumns.segmento, // nombre de la columna
-        value: clientSegment             // valor elegido en el <Select>
-      });
-    }
+  //   if (selectedColumns.segmento) {
+  //     filters.push({
+  //       type: 'segmentacion',
+  //       column: selectedColumns.segmento, // nombre de la columna
+  //       value: clientSegment             // valor elegido en el <Select>
+  //     });
+  //   }
 
-    if (selectedColumns.cluster) {
-      filters.push({
-        type: 'cluster',
-        column: selectedColumns.cluster,
-        value: cluster
-      });
-    }
+  //   if (selectedColumns.cluster) {
+  //     filters.push({
+  //       type: 'cluster',
+  //       column: selectedColumns.cluster,
+  //       value: cluster
+  //     });
+  //   }
 
-    if (selectedColumns.estrategia) {
-      filters.push({
-        type: 'estrategia',
-        column: selectedColumns.estrategia,
-        value: strategy
-      });
-    }
-    if (selectedColumns.fechaCuota) {
-      filters.push({
-        type: 'fechaCuota',
-        column: selectedColumns.fechaCuota,
-        value: fecha
-      });
-    }
+  //   if (selectedColumns.estrategia) {
+  //     filters.push({
+  //       type: 'estrategia',
+  //       column: selectedColumns.estrategia,
+  //       value: strategy
+  //     });
+  //   }
+  //   if (selectedColumns.fechaCuota) {
+  //     filters.push({
+  //       type: 'fechaCuota',
+  //       column: selectedColumns.fechaCuota,
+  //       value: fecha
+  //     });
+  //   }
 
-    if (selectedColumns.linea) {
-      filters.push({
-        type: 'Linea',
-        column: selectedColumns.linea,
-        value: linea
-      });
-    }
+  //   if (selectedColumns.linea) {
+  //     filters.push({
+  //       type: 'Linea',
+  //       column: selectedColumns.linea,
+  //       value: linea
+  //     });
+  //   }
 
-    if (filters.length === 0) {
-      alert('Elige al menos un filtro antes de continuar');
-      return;
-    }
+  //   if (filters.length === 0) {
+  //     alert('Elige al menos un filtro antes de continuar');
+  //     return;
+  //   }
 
-    const payload = {
-      tipoCampana: tipoCampaña, // "Recordatorio" o "Fidelizacion"
-      table: selectedDatabase, // nombre de la tabla o vista en BigQuery
-      filters                  // array con los filtros
-    };
+  //   const payload = {
+  //     tipoCampana: tipoCampaña, // "Recordatorio" o "Fidelizacion"
+  //     table: selectedDatabase, // nombre de la tabla o vista en BigQuery
+  //     filters                  // array con los filtros
+  //   };
 
+  //   try {
+  //     console.log('Enviando payload de filtros:', payload);
+  //     const { data } = await axiosInstance.post('/bigquery/filtrar', payload);
+  //     console.log('Datos filtrados →', data);
+  //     let clientsProcesados = data.rows;
+  //     if (tipoCampaña === "Fidelizacion") {
+  //       const opcionesFecha = { weekday: 'long', day: 'numeric', month: 'long' };
+  //       clientsProcesados = data.rows.map(row => {
+  //         let fechaLegible = '';
+  //         // Verifica si feccuota existe y tiene la propiedad value
+  //         if (row.feccuota && row.feccuota.value) {
+  //           const fechaObj = new Date(row.feccuota.value);
+  //           if (!isNaN(fechaObj.getTime())) {
+  //             fechaLegible = fechaObj.toLocaleDateString('es-ES', opcionesFecha);
+  //           }
+  //         }
+  //         return {
+  //           ...row,
+  //           feccuota: fechaLegible
+  //         };
+  //       });
+  //     }
+  //     setClients(clientsProcesados);
+  //     console.log('Datos filtrados:', data);
+  //     // TODO: guarda "data" en estado o muéstralo en pantalla
+  //   } catch (error) {
+  //     console.error('Error al aplicar filtros:', error);
+  //     alert('Ocurrió un problema al aplicar los filtros');
+  //   }
+  // };
+
+    const applyFilters = async () => {
     try {
-      console.log('Enviando payload de filtros:', payload);
-      const { data } = await axiosInstance.post('/bigquery/filtrar', payload);
-      console.log('Datos filtrados →', data);
-      let clientsProcesados = data.rows;
-      if (tipoCampaña === "Fidelizacion") {
-        const opcionesFecha = { weekday: 'long', day: 'numeric', month: 'long' };
-        clientsProcesados = data.rows.map(row => {
-          let fechaLegible = '';
-          // Verifica si feccuota existe y tiene la propiedad value
-          if (row.feccuota && row.feccuota.value) {
-            const fechaObj = new Date(row.feccuota.value);
-            if (!isNaN(fechaObj.getTime())) {
-              fechaLegible = fechaObj.toLocaleDateString('es-ES', opcionesFecha);
-            }
-          }
-          return {
-            ...row,
-            feccuota: fechaLegible
-          };
-        });
-      }
-      setClients(clientsProcesados);
-      console.log('Datos filtrados:', data);
-      // TODO: guarda "data" en estado o muéstralo en pantalla
-    } catch (error) {
-      console.error('Error al aplicar filtros:', error);
+      setLoadingColumns(true);
+      const filters = [
+        { type: 'segmento', value: clientSegment || 'Todos' },
+        { type: 'asesor', value: asesor || 'Todos' },
+      ];
+
+      const { data } = await axiosInstance.post('/bigquery/filtrar', { filters });
+      const rows = data.rows || [];
+      setClients(rows);
+
+      // --- upsert inmediato en Postgre con lo filtrado ---
+      await axiosInstance.post('/campaings/sync-clients', { clients: rows });
+
+    } catch (e) {
+      console.error(e);
       alert('Ocurrió un problema al aplicar los filtros');
+    } finally {
+      setLoadingColumns(false);
     }
   };
+
+
+
   // ─────────────────────────────────────────────────────────────────
-  const columnsgrid = [
-    { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 180 },
-    { field: 'nombre', headerName: 'Nombre', width: 180 },
-    { field: 'telefono', headerName: 'Teléfono', width: 180 },
-    { field: 'segmentacion', headerName: 'Segmento', width: 180 },
-    { field: 'monto', headerName: 'Monto', width: 150 },
-    { field: 'feccuota', headerName: 'Fecha Cuota', width: 180 },
-    { field: 'email', headerName: 'Correo', width: 220 },
-    { field: 'modelo', headerName: 'Modelo', width: 180 },
-    { field: 'codpago', headerName: 'Código Pago', width: 180 },
-    { field: 'Cta_Act_Pag', headerName: 'Cuotas', width: 120 },
+  // const columnsgrid = [
+  //   { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 180 },
+  //   { field: 'nombre', headerName: 'Nombre', width: 180 },
+  //   { field: 'telefono', headerName: 'Teléfono', width: 180 },
+  //   { field: 'segmentacion', headerName: 'Segmento', width: 180 },
+  //   { field: 'monto', headerName: 'Monto', width: 150 },
+  //   { field: 'feccuota', headerName: 'Fecha Cuota', width: 180 },
+  //   { field: 'email', headerName: 'Correo', width: 220 },
+  //   { field: 'modelo', headerName: 'Modelo', width: 180 },
+  //   { field: 'codpago', headerName: 'Código Pago', width: 180 },
+  //   { field: 'Cta_Act_Pag', headerName: 'Cuotas', width: 120 },
+  // ];
+   const columnsgrid = [
+    { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 170 },
+    { field: 'N_Doc', headerName: 'N° Doc', width: 140 },
+    { field: 'Nombres', headerName: 'Nombres', width: 200 },
+    { field: 'Apellido_Paterno', headerName: 'Apellido Paterno', width: 200 },
+    { field: 'Telf_SMS', headerName: 'Teléfono', width: 150 },
+    { field: 'Segmento', headerName: 'Segmento', width: 150 },
+    { field: 'E_mail', headerName: 'Correo', width: 220 },
+    { field: 'Zona', headerName: 'Zona', width: 120 },
+    { field: 'Asesor', headerName: 'Asesor', width: 180 },
   ];
   // ---------------------------------------------------------------------------
 
@@ -372,7 +436,7 @@ export default function CampaignPage() {
               />
             </Grid>
 
-            {/* <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel sx={{ color: 'darkBlue', fontWeight: 600 }}></InputLabel>
                 <Autocomplete
@@ -390,7 +454,7 @@ export default function CampaignPage() {
                   freeSolo  // Permite escribir texto que no está en las opciones (útil para búsqueda)
                 />
               </FormControl>
-            </Grid> */}
+            </Grid> 
 
 
 
@@ -400,7 +464,7 @@ export default function CampaignPage() {
           <Divider sx={{ mb: 5 }} />
 
           {/* SEGMENTACION */}
-          <Typography
+          {/* <Typography
             variant="h6"
             sx={{ color: colors.darkBlue, fontWeight: "700", mb: 3, borderBottom: `3px solid ${colors.primaryBlue}`, pb: 1 }}
           >
@@ -520,34 +584,70 @@ export default function CampaignPage() {
                   <MenuItem value="Fidelizacion">Fidelización</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
+            </Grid> */}
 
             {/* Botón para aplicar los filtros */}
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Button variant="contained" color="primary" onClick={applyFilters} sx={{ mt: 2 }}>
                 Aplicar Filtros
               </Button>
             </Grid>
+          </Grid> */}
+          <Typography variant="h6" sx={{ /* ...estilos... */ }}>Segmentación</Typography>
+          <Grid container spacing={4} mb={5}>
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Segmento</InputLabel>
+                <Select value={clientSegment} onChange={(e)=>setClientSegment(e.target.value)} label="Segmento">
+                  <MenuItem value="Todos">Todos</MenuItem>
+                  {segments.map(seg => <MenuItem key={seg} value={seg}>{seg}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Asesor</InputLabel>
+                <Select value={asesor} onChange={(e)=>setAsesor(e.target.value)} label="Asesor">
+                  <MenuItem value="Todos">Todos</MenuItem>
+                  {asesores.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <Button variant="contained" onClick={applyFilters}>Aplicar Filtros</Button>
+            </Grid>
           </Grid>
+
 
           <Divider sx={{ mb: 5 }} />
           <Box sx={{ height: 400, width: '100%' }}>
             {loadingColumns ? (
               <CircularProgress sx={{ display: "block", margin: "0 auto" }} /> // Mostrar cargando
             ) : (
-              <DataGrid
-                rows={clients.map((client, index) => ({
-                  ...client,
-                  id: client.telefono || index,  // Asegúrate de que 'rows' tenga un 'id' único
-                }))}
-                columns={columnsgrid}  // Utilizando el arreglo columnsgrid para definir las columnas
-                pageSize={5}
-                rowsPerPageOptions={[5, 10, 20]}
-                pagination
-                checkboxSelection
-                disableSelectionOnClick
-                loading={loadingColumns}
-              />
+              // <DataGrid
+              //   rows={clients.map((client, index) => ({
+              //     ...client,
+              //     id: client.telefono || index,  // Asegúrate de que 'rows' tenga un 'id' único
+              //   }))}
+              //   columns={columnsgrid}  // Utilizando el arreglo columnsgrid para definir las columnas
+              //   pageSize={5}
+              //   rowsPerPageOptions={[5, 10, 20]}
+              //   pagination
+              //   checkboxSelection
+              //   disableSelectionOnClick
+              //   loading={loadingColumns}
+              // />
+                <DataGrid
+                  rows={clients.map((r, i) => ({ ...r, id: `${r.N_Doc || i}-${r.Codigo_Asociado || 'X'}` }))}
+                  columns={columnsgrid}
+                  pageSize={5}
+                  rowsPerPageOptions={[5,10,20]}
+                  pagination
+                  checkboxSelection
+                  disableSelectionOnClick
+                  loading={loadingColumns}
+                />
+
             )}
           </Box>
           <Divider sx={{ mb: 5 }} />

@@ -77,6 +77,8 @@ model cliente {
   fecha_ultimo_estado          DateTime?          @db.Timestamp(6)
   Segmento                     String?
   Codigo_Asociado              String?
+  Zona                         String?
+  Cluster                      String?
   accion_comercial             accion_comercial[]
   cita                         cita[]
   cliente_campanha             cliente_campanha[]

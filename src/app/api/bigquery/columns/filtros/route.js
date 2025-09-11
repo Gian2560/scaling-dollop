@@ -119,7 +119,7 @@ export async function GET(req) {
     // Distintos Asesor desde BD_AsignadaGeneralAgosto
     const qAsesor = `
       SELECT DISTINCT Asesor
-      FROM \`${projectId}.${datasetId}.BD_AsignadaGeneralAgosto\`
+      FROM \`${projectId}.${datasetId}.BD_Conglomerado_con_clusters\`
       WHERE Asesor IS NOT NULL
       ORDER BY Asesor
     `;

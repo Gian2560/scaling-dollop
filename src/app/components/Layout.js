@@ -84,7 +84,7 @@ export default function Layout({ children }) {
       </Toolbar>
       <Divider sx={{ bgcolor: "#254e59" }} />
       <List>
-        <ListItem
+        {/*<ListItem
           button="true"
           onClick={() => router.push("/")}
           sx={{
@@ -94,11 +94,11 @@ export default function Layout({ children }) {
           }}
         >
           <ListItemIcon sx={{ color: "#fff" }}>
-            <HomeIcon /> {/* Aquí está el error corregido */}
+            <HomeIcon /> 
           </ListItemIcon>
 
           <ListItemText primary="Home" />
-        </ListItem>
+        </ListItem>*/}
         {/*<ListItem
           button="true"
           onClick={() => router.push("/leads")}
@@ -113,7 +113,7 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Leads" />
         </ListItem>*/}
-        <ListItem
+        {session?.user?.role === "Administrador" && (<ListItem
           button="true"
           onClick={() => router.push("/clientes")}
           sx={{
@@ -126,8 +126,27 @@ export default function Layout({ children }) {
             <PeopleIcon />
           </ListItemIcon>
           <ListItemText primary="Clientes" />
-        </ListItem>
+        </ListItem>)}
+        
+
         <ListItem
+          button="true"
+          onClick={() => router.push("/task")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <PeopleIcon />
+          </ListItemIcon>
+          <ListItemText primary="Tareas" />
+        </ListItem>
+
+
+
+        {session?.user?.role === "Administrador" && (<ListItem
           button="true"
           onClick={() => router.push("/dashboard")}
           sx={{
@@ -140,7 +159,7 @@ export default function Layout({ children }) {
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
-        </ListItem>
+        </ListItem>)}
 
         {session?.user?.role === "Administrador" && (<ListItem
           button="true"
@@ -187,20 +206,20 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Gestores" />
         </ListItem>*/}
-        <ListItem
+        {/*<ListItem
           button="true"
           onClick={() => router.push("/promesasPago")}
           sx={{
             "&:hover": { bgcolor: "#2D3748" },
             px: 3,
             py: 1.5,
-          }}
+          }*}
         >
           <ListItemIcon sx={{ color: "#fff" }}>
             <CalendarMonthIcon />
           </ListItemIcon>
           <ListItemText primary="Promesas de Pago" />
-        </ListItem>
+        </ListItem>*/}
 
         {session?.user?.role === "Administrador" && (
           <ListItem
@@ -236,9 +255,9 @@ export default function Layout({ children }) {
           </ListItem>
         )}
 
-        {/* <ListItem
+        { <ListItem
           button="true"
-          onClick={() => router.push("/usuarios")}
+          onClick={() => router.push("/clientes_gestion")}
           sx={{
             "&:hover": { bgcolor: "#2D3748" },
             px: 3,
@@ -248,8 +267,8 @@ export default function Layout({ children }) {
           <ListItemIcon sx={{ color: "#fff" }}>
             <PeopleIcon />
           </ListItemIcon>
-          <ListItemText primary="Usuarios" />
-        </ListItem> */}
+          <ListItemText primary="Gestion" />
+        </ListItem> }
 
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />
@@ -300,10 +319,10 @@ export default function Layout({ children }) {
               style={{ height: 40, marginRight: 10 }}
             />
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
-              REACTIVACIONES
+              FIDELIZACION 
             </Typography>
           </Box>
-          <Notificaciones></Notificaciones>
+          {/*<Notificaciones></Notificaciones>*/}
           <Avatar
             alt="Usuario"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAJFBMVEVHcEztNyLsNyLnNiHuOCPtNyLtNyPuNyLuOCPrNiLuOCPuOCOxF7LxAAAAC3RSTlMASTUO7Gmkic4hukCMuxcAAAB2SURBVCiRzZLZDoAgDARLqVz9//9VTjXZkvjmvJGhkN2U6IaLSMgEObTByHkdIBmndECGKY+vk3n35xxFgzWLqCaYxL6PELd6QTAZc5VCttO0l9tngy2vkpPlQg3KrrEy9aN7rQRP6UFTv5P7NRltRCh7k093At7KD2uUo+ERAAAAAElFTkSuQmCC"

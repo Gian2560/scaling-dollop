@@ -13,8 +13,8 @@ export async function GET() {
     });
 
     return NextResponse.json(usuarios);
-  } catch (error) {
-    console.error("❌ Error obteniendo usuarios:", error);
+  } catch (err) {
+    console.error("❌ Error obteniendo usuarios:", err);
     return NextResponse.json({ error: "Error obteniendo usuarios" }, { status: 500 });
   }
 }
@@ -31,8 +31,25 @@ export async function POST(req) {
 
     const { username, password, rol_id, activo, nombre, primer_apellido, segundo_apellido, celular } = body;
 
-    if (!username || !password || !nombre || !primer_apellido) {
+    if (!username || !password || !nombre) {
       return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    }
+
+    // Validar longitudes según el schema
+    if (username.length > 50) {
+      return NextResponse.json({ error: "Username no puede exceder 50 caracteres" }, { status: 400 });
+    }
+    if (nombre.length > 120) {
+      return NextResponse.json({ error: "Nombre no puede exceder 120 caracteres" }, { status: 400 });
+    }
+    if (primer_apellido.length > 120) {
+      return NextResponse.json({ error: "Primer apellido no puede exceder 120 caracteres" }, { status: 400 });
+    }
+    if (segundo_apellido && segundo_apellido.length > 120) {
+      return NextResponse.json({ error: "Segundo apellido no puede exceder 120 caracteres" }, { status: 400 });
+    }
+    if (celular && celular.length > 12) {
+      return NextResponse.json({ error: "Celular no puede exceder 12 caracteres" }, { status: 400 });
     }
 
     // Convertir rol_id a número
@@ -41,37 +58,82 @@ export async function POST(req) {
       return NextResponse.json({ error: "rol_id debe ser un número válido" }, { status: 400 });
     }
 
+    // Convertir activo a booleano
+    const isActivo = activo === 1 || activo === true || activo === "true";
+
     // Hashear la contraseña antes de guardarla
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear usuario y su persona asociada
-    const newUsuario = await prisma.usuario.create({
-      data: {
-        username,
-        password: hashedPassword,
-        rol_id: parsedRolId || 2,
-        activo:  1,
-        persona: {
-          create: {
-            nombre,
-            primer_apellido,
-            segundo_apellido,
-            celular,
-            num_leads: 1, // Asegúrate de que esto sea correcto en el modelo
-          },
+    // Crear usuario primero
+    let newUsuario;
+    try {
+      newUsuario = await prisma.usuario.create({
+        data: {
+          username,
+          password: hashedPassword,
+          rol_id: parsedRolId || 2,
+          activo: isActivo,
         },
-      },
-      include: { persona: true },
-    });
+      });
+      console.log("✅ Usuario creado con ID:", newUsuario.usuario_id);
+    } catch (userError) {
+      console.error("❌ Error creando usuario:", userError);
+      throw new Error(`Error creando usuario: ${userError.message}`);
+    }
 
-    console.log("✅ Usuario creado:", newUsuario);
+    // Después crear persona con persona_id = usuario_id
+    let newPersona;
+    try {
+      console.log("🔄 Intentando crear persona con ID:", newUsuario.usuario_id);
+      newPersona = await prisma.persona.create({
+        data: {
+          persona_id: newUsuario.usuario_id,
+          nombre,
+          primer_apellido,
+          segundo_apellido: segundo_apellido || null,
+          celular: celular || null,
+          num_leads: 0,
+        },
+      });
+      console.log("✅ Persona creada con ID:", newPersona.persona_id);
+    } catch (personaError) {
+      console.error("❌ Error creando persona:", personaError);
+      // Si falla la creación de persona, eliminar el usuario creado
+      try {
+        await prisma.usuario.delete({ where: { usuario_id: newUsuario.usuario_id } });
+      } catch (deleteError) {
+        console.error("❌ Error eliminando usuario tras fallo:", deleteError);
+      }
+      throw new Error(`Error creando persona: ${personaError.message}`);
+    }
 
-    return NextResponse.json(newUsuario, { status: 201 });
-  } catch (error) {
-    console.error("❌ Error creando usuario:", error);
+    // Obtener el usuario completo con persona y rol
+    let usuarioCompleto;
+    try {
+      usuarioCompleto = await prisma.usuario.findUnique({
+        where: { usuario_id: newUsuario.usuario_id },
+        include: { 
+          persona: true,
+          rol: true 
+        },
+      });
+      
+      console.log("✅ Usuario completo obtenido:", usuarioCompleto);
+
+      if (!usuarioCompleto) {
+        throw new Error("Usuario no encontrado después de la creación");
+      }
+    } catch (findError) {
+      console.error("❌ Error obteniendo usuario completo:", findError);
+      throw new Error(`Error obteniendo usuario: ${findError.message}`);
+    }
+
+    return NextResponse.json(usuarioCompleto, { status: 201 });
+  } catch (err) {
+    console.error("❌ Error creando usuario:", err);
     
     return NextResponse.json(
-      { error: "Error creando usuario", details: error.message },
+      { error: "Error creando usuario", details: err.message },
       { status: 500 }
     );
   }
@@ -120,8 +182,8 @@ export async function PUT(req, { params }) {
     });
 
     return NextResponse.json(updatedUsuario);
-  } catch (error) {
-    console.error("❌ Error actualizando usuario:", error);
+  } catch (err) {
+    console.error("❌ Error actualizando usuario:", err);
     return NextResponse.json({ error: "Error actualizando usuario" }, { status: 500 });
   }
 }

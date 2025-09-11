@@ -98,14 +98,18 @@ model cliente_campanha {
   cliente_id          Int
   campanha_id         Int
   fecha_asociacion    DateTime? @default(now()) @db.Timestamp(6)
-  message_id          String?   @db.VarChar(50)
+  whatsapp_message_id String?   @db.VarChar(50)
   message_status      String?   @db.VarChar(20)
   error_code          Int?
   last_update         DateTime? @default(now()) @db.Timestamp(6)
+  estado_mensaje      String?   @db.VarChar(25)
+  fecha_envio         DateTime? @db.Timestamp(6)
+  fecha_ultimo_estado DateTime? @db.Timestamp(6)
+  error_descripcion   String?
   cliente             cliente   @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_1")
   campanha            campanha  @relation(fields: [campanha_id], references: [campanha_id], onDelete: Cascade, onUpdate: NoAction, map: "cliente_campanha_ibfk_2")
 
-  @@index([message_id], map: "idx_message_id")
+  @@index([whatsapp_message_id], map: "idx_message_id")
 }
 
 model codigo_pago {

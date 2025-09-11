@@ -50,7 +50,7 @@ export async function POST(req) {
         username,
         password: hashedPassword,
         rol_id: parsedRolId || 2,
-        activo: activo ?? 1,
+        activo:  1,
         persona: {
           create: {
             nombre,

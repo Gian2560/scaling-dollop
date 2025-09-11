@@ -106,7 +106,7 @@ export async function GET(req) {
     const url = new URL(req.url);
     const projectId = 'peak-emitter-350713';
     const datasetId = 'FR_Reingresos_output';    // <-- CAMBIO
-    const tableName = url.searchParams.get('database') || 'BD_SegmentacionFinal';
+    const tableName = 'BD_Conglomerado_con_clusters';
 
     // Distintos Segmento desde BD_SegmentacionFinal
     const qSegmento = `

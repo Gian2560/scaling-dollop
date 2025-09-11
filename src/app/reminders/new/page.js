@@ -371,14 +371,13 @@ export default function CampaignPage() {
   // ];
    const columnsgrid = [
     { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 170 },
-    { field: 'N_Doc', headerName: 'N° Doc', width: 140 },
-    { field: 'Nombres', headerName: 'Nombres', width: 200 },
-    { field: 'Apellido_Paterno', headerName: 'Apellido Paterno', width: 200 },
-    { field: 'Telf_SMS', headerName: 'Teléfono', width: 150 },
+    { field: 'documento_identidad', headerName: 'N° Doc', width: 140 },
+    { field: 'nombre', headerName: 'Nombres', width: 200 },
+    { field: 'celular', headerName: 'Teléfono', width: 150 },
     { field: 'Segmento', headerName: 'Segmento', width: 150 },
-    { field: 'E_mail', headerName: 'Correo', width: 220 },
+    { field: 'email', headerName: 'Correo', width: 220 },
     { field: 'Zona', headerName: 'Zona', width: 120 },
-    { field: 'Asesor', headerName: 'Asesor', width: 180 },
+    { field: 'gestor', headerName: 'Asesor', width: 180 },
   ];
   // ---------------------------------------------------------------------------
 

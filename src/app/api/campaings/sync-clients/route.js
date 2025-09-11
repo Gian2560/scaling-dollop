@@ -97,14 +97,13 @@ export async function POST(req) {
       // Mapea y convierte tipos
       const payload = {
         Codigo_Asociado: toStr(c.Codigo_Asociado),
-        documento_identidad: toStr(c.N_Doc),               // <-- A STRING
-        nombre: toStr(c.Nombres),
-        apellido: toStr(c.Apellido_Paterno),
-        celular: normalizePhone(c.Telf_SMS),
+        documento_identidad: toStr(c.documento_identidad),               // <-- A STRING
+        nombre: toStr(c.nombre),
+        celular: normalizePhone(c.celular),
         Segmento: toStr(c.Segmento),
-        email: toStr(c.E_mail),
+        email: toStr(c.email),
         Zona: toStr(c.Zona),
-        gestor: toStr(c.Asesor),
+        gestor: toStr(c.gestor),
       };
 
       // Construye OR sin valores nulos/vacíos

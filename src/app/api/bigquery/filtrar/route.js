@@ -287,7 +287,7 @@ import bq from '@/lib/bigquery';
 
 export async function POST(req) {
   try {
-    const { filters } = await req.json(); // [{ type:'segmento', value }, { type:'asesor', value }]
+    const { filters } = await req.json();
     const project = 'peak-emitter-350713';
     const dataset = 'FR_Reingresos_output';
 
@@ -296,69 +296,59 @@ export async function POST(req) {
 
     const sql = `
       WITH base AS (
-        SELECT 
-          Codigo_Asociado,
-          N_Doc,
-          Nombres,
-          Apellido_Paterno,
-          Telf_SMS,
-          Segmento,
-          E_mail,
-          Zona
-        FROM \`${project}.${dataset}.BD_SegmentacionFinal\`
-      ),
-      ases AS (
-        SELECT Codigo_Asociado, Asesor
-        FROM \`${project}.${dataset}.BD_AsignadaGeneralAgosto\`
-      ),
-      joined AS (
-        SELECT 
-          b.Codigo_Asociado,
-          b.N_Doc,
-          b.Nombres,
-          b.Apellido_Paterno,
-          b.Telf_SMS,
-          b.Segmento,
-          b.E_mail,
-          b.Zona,
-          a.Asesor
-        FROM base b
-        LEFT JOIN ases a
-        USING (Codigo_Asociado)
+        SELECT bd_com.*
+        FROM \`${project}.${dataset}.BD_Conglomerado_con_clusters\` bd_com
+        LEFT JOIN \`${project}.${dataset}.BD_ReingresosDiarios\` bd_dia
+          ON bd_com.N_Doc = bd_dia.Documento
+        WHERE bd_dia.Documento IS NULL
       ),
       filtrado AS (
         SELECT *
-        FROM joined
+        FROM base
         WHERE (@seg IS NULL OR @seg = 'Todos' OR Segmento = @seg)
           AND (@ase IS NULL OR @ase = 'Todos' OR Asesor = @ase)
+          AND NombresAsociado IS NOT NULL
       ),
-      ranked AS (
-        SELECT 
-          *,
-          ROW_NUMBER() OVER (PARTITION BY N_Doc ORDER BY Codigo_Asociado) AS rn
+      ranked_data AS (
+        SELECT CodigoAsociado,
+               N_Doc,
+               NombresAsociado,
+               TelfSMS,
+               Segmento,
+               Email,
+               Zona,
+               Asesor,
+               ROW_NUMBER() OVER (PARTITION BY N_Doc ORDER BY CodigoAsociado) as rn
         FROM filtrado
       )
-      SELECT 
-        Codigo_Asociado,
-        N_Doc,
-        Nombres,
-        Apellido_Paterno,
-        Telf_SMS,
-        Segmento,
-        E_mail,
-        Zona,
-        Asesor
-      FROM ranked
-      WHERE rn = 1
+      SELECT CodigoAsociado AS Codigo_Asociado,
+             N_Doc AS documento_identidad,
+             COALESCE(NombresAsociado, 'Maquisocio') AS nombre,
+             TelfSMS AS celular,
+             Segmento,
+             Email AS email,
+             Zona,
+             Asesor AS gestor
+      FROM ranked_data
+      WHERE rn = 1;
     `;
 
     const params = { seg, ase };
+
+    console.log('=== DEBUG FILTRAR API ===');
+    console.log('Filtros recibidos:', { seg, ase });
+    console.log('Parámetros SQL:', params);
+    console.log('Consulta SQL:', sql);
 
     const [rows] = await bq.query({
       query: sql,
       params,
       parameterMode: 'named',
     });
+
+    console.log(`Total de registros obtenidos: ${rows.length}`);
+    console.log('Primeros 5 resultados:', rows.slice(0, 5));
+    console.log('=== FIN DEBUG ===');
 
     return Response.json({ rows });
   } catch (err) {

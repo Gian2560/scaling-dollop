@@ -6,28 +6,17 @@ export async function GET() {
   const dataset = 'FR_Reingresos_output';
 
   const sql = `
-    WITH base AS (
-      SELECT Codigo_Asociado, N_Doc, Nombres, Apellido_Paterno, Telf_SMS, Segmento, E_mail, Zona
-      FROM \`${project}.${dataset}.BD_SegmentacionFinal\`
-    ),
-    ases AS (
-      SELECT Codigo_Asociado, Asesor
-      FROM \`${project}.${dataset}.BD_AsignadaGeneralAgosto\`
-    ),
-    joined AS (
-      SELECT b.*, a.Asesor
-      FROM base b
-      LEFT JOIN ases a USING (Codigo_Asociado)
-    ),
-    ranked AS (
-      SELECT *,
-             ROW_NUMBER() OVER (PARTITION BY N_Doc ORDER BY Codigo_Asociado) rn
-      FROM joined
+    WITH ranked_data AS (
+      SELECT bd_com.*,
+             ROW_NUMBER() OVER (PARTITION BY bd_com.N_Doc ORDER BY bd_com.N_Doc) as rn
+      FROM \`${project}.${dataset}.BD_Conglomerado_con_clusters\` bd_com
+      LEFT JOIN \`${project}.${dataset}.BD_ReingresosDiarios\` bd_dia
+        ON bd_com.N_Doc = bd_dia.Documento
+      WHERE bd_dia.Documento IS NULL
     )
-    SELECT Codigo_Asociado, N_Doc, Nombres, Apellido_Paterno, Telf_SMS, Segmento, E_mail, Zona, Asesor
-    FROM ranked
-    WHERE rn = 1
-    LIMIT 10000
+    SELECT * EXCEPT(rn)
+    FROM ranked_data
+    WHERE rn = 1;
   `;
 
   try {

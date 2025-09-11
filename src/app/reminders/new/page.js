@@ -96,12 +96,12 @@ export default function CampaignPage() {
     const boot = async () => {
       try {
         setLoadingColumns(true);
-        const [tplRes, filtRes, initRes] = await Promise.all([
-          axiosInstance.get("/plantillas"),
+        const [filtRes, initRes] = await Promise.all([
+          //axiosInstance.get("/plantillas"),
           axiosInstance.get("/bigquery/columns/filtros", { params: { database: "BD_SegmentacionFinal" } }),
           axiosInstance.get("/bigquery/segmentacionfinal"),
         ]);
-        setTemplates(tplRes.data || []);
+        //setTemplates(tplRes.data || []);
         setSegments(filtRes.data.segmentos || []);
         setAsesores(filtRes.data.asesores || []);
         setClients(initRes.data.rows || []);
@@ -111,7 +111,17 @@ export default function CampaignPage() {
         setLoadingColumns(false);
       }
     };
+    const fetchTemplates = async () => {
+      try {
+        const response = await axiosInstance.get("/plantillas"); // Solicitud GET al endpoint de plantillas
+        setTemplates(response.data); // Guarda las plantillas en el estado
+        console.log("Plantillas obtenidas:", response.data);
+      } catch (error) {
+        console.error("Error al obtener plantillas:", error);
+      }
+    };
     boot();
+    fetchTemplates();
   }, []);
 
   //GIAN
@@ -141,38 +151,78 @@ export default function CampaignPage() {
 
 
 
+  // const handleSubmit = async () => {
+  //   if (clients.length === 0) {
+  //     alert("No hay clientes para agregar a la campaña.");
+  //     return;
+  //   }
+
+  //   const campaignData = {
+  //     nombre_campanha: campaignName,
+  //     descripcion: "Descripción de campaña",
+  //     template_id: template,
+  //     fecha_inicio: sendDate,
+  //     fecha_fin: sendTime,
+  //     clients: clients,  // Aquí envías toda la información de los clientes
+  //     variableMappings,
+  //   };
+
+  //   try {
+  //     // Enviar solicitud para crear la campaña
+  //     const response = await axiosInstance.post("/campaings", campaignData);
+
+  //     const campanhaId = response.data.campanha_id;  // Obtener el ID de la campaña creada
+
+  //     console.log("Campaña creada con ID:", campanhaId);
+
+  //     // Ahora los clientes serán automáticamente asociados con la campaña
+  //     alert("Campaña creada y clientes asociados exitosamente.");
+  //   } catch (error) {
+  //     console.error("Error al crear campaña o agregar clientes:", error);
+  //     alert("Hubo un problema al crear la campaña o agregar los clientes.");
+  //   }
+  // };
   const handleSubmit = async () => {
-    if (clients.length === 0) {
+    if (!campaignName) {
+      alert("Ingresa el nombre de la campaña.");
+      return;
+    }
+    if (!clients.length) {
       alert("No hay clientes para agregar a la campaña.");
       return;
     }
 
-    const campaignData = {
-      nombre_campanha: campaignName,
-      descripcion: "Descripción de campaña",
-      template_id: template,
-      fecha_inicio: sendDate,
-      fecha_fin: sendTime,
-      clients: clients,  // Aquí envías toda la información de los clientes
-      variableMappings,
-    };
-
     try {
-      // Enviar solicitud para crear la campaña
-      const response = await axiosInstance.post("/campaings", campaignData);
+      // 1) crear campaña
+      const createRes = await axiosInstance.post("/campaings", {
+        nombre_campanha: campaignName,
+        descripcion: "Descripción de campaña",
+        template_id: Number(template) || null,
+        clients: clients,
+        fecha_inicio: sendDate,
+        fecha_fin: null,
+        variableMappings,
+      });
 
-      const campanhaId = response.data.campanha_id;  // Obtener el ID de la campaña creada
+      // tu POST /api/campaings devuelve { message, campanha }
+      const campanhaId = createRes.data?.campanha?.campanha_id;
+      if (!campanhaId) throw new Error("No se recibió campanha_id al crear la campaña.");
 
-      console.log("Campaña creada con ID:", campanhaId);
+      // 2) asociar clientes a la campaña
+      await axiosInstance.post(`/campaings/add-clients/${campanhaId}`, {
+        clients, // ← ya normalizados
+      });
 
-      // Ahora los clientes serán automáticamente asociados con la campaña
       alert("Campaña creada y clientes asociados exitosamente.");
     } catch (error) {
-      console.error("Error al crear campaña o agregar clientes:", error);
-      alert("Hubo un problema al crear la campaña o agregar los clientes.");
+      console.error("❌ Error al crear campaña o asociar clientes:", {
+        status: error.response?.status,
+        url: error.response?.config?.url,
+        data: error.response?.data || error.message,
+      });
+      alert("Hubo un problema al crear la campaña o asociar los clientes.");
     }
   };
-
 
   const handleDatabaseChange = async (event, value) => {
     setSelectedDatabase(value);
@@ -344,7 +394,7 @@ export default function CampaignPage() {
       setClients(rows);
 
       // --- upsert inmediato en Postgre con lo filtrado ---
-      await axiosInstance.post('/campaings/sync-clients', { clients: rows });
+      //await axiosInstance.post('/campaings/sync-clients', { clients: rows });
 
     } catch (e) {
       console.error(e);

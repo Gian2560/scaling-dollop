@@ -38,10 +38,15 @@ export async function GET(req) {
 // 📌 Crear campaña
 export async function POST(req) {
     try {
-        const { nombre_campanha, descripcion, template_id, fecha_fin } = await req.json();
-        console.log("Campaña",nombre_campanha,descripcion,template_id,fecha_fin);
+        const { nombre_campanha, descripcion, template_id, fecha_fin ,variableMappings} = await req.json();
+        console.log("Campaña",nombre_campanha,descripcion,template_id,fecha_fin,variableMappings);
         const campanha = await prisma.campanha.create({
-            data: { nombre_campanha, descripcion, template_id : null, fecha_fin: new Date(fecha_fin) },
+            data: { nombre_campanha,
+                    descripcion: descripcion ?? null,
+                    template_id: Number(template_id),          // <- ahora sí
+                    fecha_fin: fecha_fin,
+                    variable_mappings: variableMappings,
+            },
         });
         
         return NextResponse.json({ message: "Campaña creada con éxito", campanha });

@@ -23,19 +23,20 @@ model accion_comercial {
 }
 
 model campanha {
-  campanha_id      Int                @id @default(autoincrement())
-  nombre_campanha  String             @db.VarChar(100)
-  descripcion      String?
-  fecha_creacion   DateTime?          @default(now()) @db.Timestamp(6)
-  estado_campanha  String?            @default("activa") @db.VarChar(25)
-  mensaje_cliente  String?
-  fecha_inicio     DateTime?          @default(now()) @db.Timestamp(6)
-  fecha_fin        DateTime?          @db.Timestamp(6)
-  num_clientes     Int?               @default(0)
-  tipo             String             @default("in") @db.VarChar(10)
-  template_id      Int?
-  template         template?          @relation(fields: [template_id], references: [id], map: "fk_campanha_template")
-  cliente_campanha cliente_campanha[]
+  campanha_id       Int                @id @default(autoincrement())
+  nombre_campanha   String             @db.VarChar(100)
+  descripcion       String?
+  fecha_creacion    DateTime?          @default(now()) @db.Timestamp(6)
+  estado_campanha   String?            @default("activa") @db.VarChar(25)
+  mensaje_cliente   String?
+  fecha_inicio      DateTime?          @default(now()) @db.Timestamp(6)
+  fecha_fin         DateTime?          @db.Timestamp(6)
+  num_clientes      Int?               @default(0)
+  tipo              String             @default("in") @db.VarChar(10)
+  template_id       Int?
+  variable_mappings Json?
+  template          template?          @relation(fields: [template_id], references: [id], map: "fk_campanha_template")
+  cliente_campanha  cliente_campanha[]
 }
 
 model cita {
@@ -64,8 +65,8 @@ model cliente {
   fecha_creacion               DateTime?          @default(now()) @db.Timestamp(6)
   fecha_ultima_interaccion     DateTime?          @db.Timestamp(6)
   fecha_ultima_interaccion_bot DateTime?          @db.Timestamp(6)
-  estado                       String?            @default("en seguimiento") @db.VarChar(25)
-  motivo                       String?            @default("desconocido") @db.VarChar(25)
+  estado                       String?            @default("en seguimiento")
+  motivo                       String?            @default("desconocido")
   categoria_no_interes         String?            @db.VarChar(20)
   detalle_no_interes           String?            @db.VarChar(100)
   bound                        Boolean?

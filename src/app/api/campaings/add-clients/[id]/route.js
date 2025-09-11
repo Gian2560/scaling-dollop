@@ -272,9 +272,15 @@ const normalizePhone = (v) => {
   return `+${withCc}`;
 };
 
-export async function POST(req, { params }) {
+const s = (v) => {
+  if (v === undefined || v === null) return null;  // deja NULL si no hay dato
+  const str = String(v).trim();
+  return str === "" ? null : str;
+};
+export async function POST(req, ctx) {
   try {
-    const campanhaId = Number(params?.id);
+    const { id } = ctx?.params?.then ? await ctx.params : (ctx.params || {});
+    const campanhaId = Number(id);
     if (!campanhaId || Number.isNaN(campanhaId)) {
       return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
     }
@@ -293,14 +299,14 @@ export async function POST(req, { params }) {
       // Objeto proveniente de BigQuery
       const payload = {
         Codigo_Asociado: toStr(c.Codigo_Asociado),
-        documento_identidad: toStr(c.N_Doc),
-        nombre: toStr(c.Nombres),
+        documento_identidad: toStr(c.documento_identidad),
+        nombre: s(c.nombre),
         apellido: toStr(c.Apellido_Paterno),
-        celular: normalizePhone(c.Telf_SMS),
+        celular: normalizePhone(c.celular),
         Segmento: toStr(c.Segmento),
-        email: toStr(c.E_mail),
+        email: toStr(c.email),
         Zona: toStr(c.Zona),
-        gestor: toStr(c.Asesor),
+        gestor: toStr(c.gestor),
       };
 
       const or = [];

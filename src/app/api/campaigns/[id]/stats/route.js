@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const campaignId = parseInt(id);
 
     if (!campaignId || isNaN(campaignId)) {

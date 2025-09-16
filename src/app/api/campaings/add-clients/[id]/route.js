@@ -307,6 +307,7 @@ export async function POST(req, ctx) {
         email: toStr(c.email),
         Zona: toStr(c.Zona),
         gestor: toStr(c.gestor),
+        Producto: toStr(c.Producto),
       };
 
       const or = [];

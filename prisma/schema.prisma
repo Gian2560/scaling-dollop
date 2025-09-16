@@ -61,7 +61,7 @@ model cliente {
   nombre                       String             @db.VarChar(100)
   apellido                     String?            @db.VarChar(100)
   celular                      String             @db.VarChar(20)
-  email                        String?            @unique @db.VarChar(100)
+  email                        String?            @db.VarChar(100)
   fecha_creacion               DateTime?          @default(now()) @db.Timestamp(6)
   fecha_ultima_interaccion     DateTime?          @db.Timestamp(6)
   fecha_ultima_interaccion_bot DateTime?          @db.Timestamp(6)
@@ -80,6 +80,7 @@ model cliente {
   Codigo_Asociado              String?
   Zona                         String?
   Cluster                      String?
+  Producto                     String?
   accion_comercial             accion_comercial[]
   cita                         cita[]
   cliente_campanha             cliente_campanha[]
@@ -98,7 +99,7 @@ model cliente_campanha {
   cliente_id          Int
   campanha_id         Int
   fecha_asociacion    DateTime? @default(now()) @db.Timestamp(6)
-  whatsapp_message_id String?   @db.VarChar(50)
+  whatsapp_message_id String?   @db.VarChar(255)
   message_status      String?   @db.VarChar(20)
   error_code          Int?
   last_update         DateTime? @default(now()) @db.Timestamp(6)
@@ -191,7 +192,7 @@ model pago {
   cliente_id       Int
   cita_id          Int?
   fecha_pago       DateTime           @db.Timestamp(6)
-  monto            Decimal            @db.Decimal(10, 2)
+  monto            Decimal?           @db.Decimal(10, 2)
   metodo_pago      String             @db.VarChar(50)
   estado_pago      String?            @default("pendiente") @db.VarChar(25)
   first_name       String?            @default("") @db.VarChar(40)

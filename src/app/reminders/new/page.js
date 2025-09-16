@@ -36,8 +36,8 @@ export default function CampaignPage() {
   // const [strategy, setStrategy] = useState("");
   // const [fecha, setFecha] = useState("");
   // const [linea, setLinea] = useState("");
-  const [clientSegment, setClientSegment] = useState("");
-  const [asesor, setAsesor] = useState("");
+  const [clientSegments, setClientSegments] = useState([]);//nuevo
+  const [asesoresSeleccionados, setAsesoresSeleccionados] = useState([]);//nuevo
   const [segments, setSegments] = useState([]);
   const [asesores, setAsesores] = useState([]);
   const [tipoCampaña, setTipoCampaña] = useState("Fidelizacion");
@@ -382,27 +382,25 @@ export default function CampaignPage() {
   // };
 
     const applyFilters = async () => {
-    try {
-      setLoadingColumns(true);
-      const filters = [
-        { type: 'segmento', value: clientSegment || 'Todos' },
-        { type: 'asesor', value: asesor || 'Todos' },
-      ];
-
-      const { data } = await axiosInstance.post('/bigquery/filtrar', { filters });
-      const rows = data.rows || [];
-      setClients(rows);
-
-      // --- upsert inmediato en Postgre con lo filtrado ---
-      //await axiosInstance.post('/campaings/sync-clients', { clients: rows });
-
-    } catch (e) {
-      console.error(e);
-      alert('Ocurrió un problema al aplicar los filtros');
-    } finally {
-      setLoadingColumns(false);
-    }
-  };
+      try {//nuevo
+        setLoadingColumns(true);
+        const filters = [];
+        if (clientSegments.length > 0) {
+          filters.push({ type: 'segmento', value: clientSegments });
+        }
+        if (asesoresSeleccionados.length > 0) {
+          filters.push({ type: 'asesor', value: asesoresSeleccionados });
+        }
+        const { data } = await axiosInstance.post('/bigquery/filtrar', { filters });
+        const rows = data.rows || [];
+        setClients(rows);
+      } catch (e) {
+        console.error(e);
+        alert('Ocurrió un problema al aplicar los filtros');
+      } finally {
+        setLoadingColumns(false);
+      }//termina nuevo
+    };
 
 
 
@@ -428,6 +426,7 @@ export default function CampaignPage() {
     { field: 'email', headerName: 'Correo', width: 220 },
     { field: 'Zona', headerName: 'Zona', width: 120 },
     { field: 'gestor', headerName: 'Asesor', width: 180 },
+    { field: 'Producto', headerName: 'Producto', width: 180 },
   ];
   // ---------------------------------------------------------------------------
 
@@ -647,18 +646,44 @@ export default function CampaignPage() {
             <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Segmento</InputLabel>
-                <Select value={clientSegment} onChange={(e)=>setClientSegment(e.target.value)} label="Segmento">
-                  <MenuItem value="Todos">Todos</MenuItem>
-                  {segments.map(seg => <MenuItem key={seg} value={seg}>{seg}</MenuItem>)}
+                <Select
+                  multiple
+                  value={clientSegments}
+                  onChange={e => setClientSegments(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  label="Segmento"
+                  renderValue={selected => selected.join(', ')}
+                >
+                  {segments.map(seg => (
+                    <MenuItem
+                      key={seg}
+                      value={seg}
+                      sx={clientSegments.includes(seg) ? { bgcolor: '#0677f8ff', color: '#020202ff', fontWeight: 'bold' } : {}}
+                    >
+                      {seg}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Asesor</InputLabel>
-                <Select value={asesor} onChange={(e)=>setAsesor(e.target.value)} label="Asesor">
-                  <MenuItem value="Todos">Todos</MenuItem>
-                  {asesores.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+                <Select
+                  multiple
+                  value={asesoresSeleccionados}
+                  onChange={e => setAsesoresSeleccionados(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  label="Asesor"
+                  renderValue={selected => selected.join(', ')}
+                >
+                  {asesores.map(a => (
+                    <MenuItem
+                      key={a}
+                      value={a}
+                      sx={asesoresSeleccionados.includes(a) ? { bgcolor: '#0677f8ff', color: '#020202ff', fontWeight: 'bold' } : {}}
+                    >
+                      {a}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>

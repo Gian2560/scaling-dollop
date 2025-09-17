@@ -55,13 +55,19 @@ async function processAutoReply(clientPhone, messageText, clienteInfo) {
     
     // Solo marcar que el cliente ha respondido
     if (clienteInfo?.cliente_campanha?.[0]) {
+      const currentRecord = clienteInfo.cliente_campanha[0];
+
       await prisma.cliente_campanha.update({
-        where: { cliente_campanha_id: clienteInfo.cliente_campanha[0].cliente_campanha_id },
+        where: { cliente_campanha_id: currentRecord.cliente_campanha_id },
         data: {
           estado_mensaje: "replied",
           fecha_ultimo_estado: new Date(),
+          // ✅ PRESERVAR campos que no deben borrarse
+          fecha_envio: currentRecord.fecha_envio,
+          whatsapp_message_id: currentRecord.whatsapp_message_id
         }
       });
+      
       console.log(`📊 [STATUS] Cliente marcado como "replied"`);
     }
 

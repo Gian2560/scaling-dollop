@@ -51,7 +51,7 @@ async function findClientByPhone(phoneNumber) {
 // 🤖 Función para procesar respuestas automáticas
 async function processAutoReply(clientPhone, messageText, clienteInfo) {
   try {
-    console.log(`🤖 [RESPONSE] Cliente respondió: "${messageText}"`);
+    console.log(`🤖 [RESPONSE] Cliente respondió: "${messageText}": información del cliente: ${JSON.stringify(clienteInfo)}`);
     
     // Solo marcar que el cliente ha respondido
     if (clienteInfo?.cliente_campanha?.[0]) {

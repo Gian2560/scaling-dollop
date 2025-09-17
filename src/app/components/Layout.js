@@ -206,20 +206,20 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Gestores" />
         </ListItem>*/}
-        {/*<ListItem
+        <ListItem
           button="true"
           onClick={() => router.push("/promesasPago")}
           sx={{
             "&:hover": { bgcolor: "#2D3748" },
             px: 3,
             py: 1.5,
-          }*}
+          }}
         >
           <ListItemIcon sx={{ color: "#fff" }}>
             <CalendarMonthIcon />
           </ListItemIcon>
           <ListItemText primary="Promesas de Pago" />
-        </ListItem>*/}
+        </ListItem>
 
         {session?.user?.role === "Administrador" && (
           <ListItem

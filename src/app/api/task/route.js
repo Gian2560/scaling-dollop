@@ -364,6 +364,12 @@ export async function POST(request) {
             estado: true,
             fecha_ultimo_estado: true,
             accion_comercial: {
+              where: {
+        estado: {
+          not: null,    // No sea null
+          not: ''       // No sea cadena vacía
+        }
+      },
               select: {
                 estado: true,
                 fecha_accion: true
@@ -383,7 +389,7 @@ export async function POST(request) {
           if (
             ultimaAccion &&
             ultimaAccion.estado === estadoFrontend &&
-            (cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+            (new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
           ) {
             // Para acciones comerciales, todos los que califican son "completadas"
             completadas++;

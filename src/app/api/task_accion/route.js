@@ -273,7 +273,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Obtener estadísticas y métricas
+/* // POST - Obtener estadísticas y métricas
 export async function POST(request) {
   try {
     console.log('🚀 Iniciando POST /api/task para métricas');
@@ -332,7 +332,7 @@ export async function POST(request) {
         }
       });
 
-      console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
+      console.log(`📋 Candidoooooooooooooooooatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
 
       // ✅ CLASIFICAR EN PENDIENTES Y COMPLETADAS
       let pendientes = 0;
@@ -428,7 +428,7 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-}
+} */
 
 // PUT - Obtener estadísticas de mensajes enviados (acciones comerciales "Código entregado especial retadora")
 export async function PUT(request) {

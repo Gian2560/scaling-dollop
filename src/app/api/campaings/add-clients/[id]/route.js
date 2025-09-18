@@ -36,12 +36,18 @@ export async function POST(req, ctx) {
         return found?.cliente_id ?? null;
       }
       // Objeto proveniente de BigQuery
+      const celularNormalizado = normalizePhone(c.celular);
+      if (!celularNormalizado) {
+        console.log(`⚠️ Cliente sin celular válido - no se creará:`, c.nombre || c.documento_identidad);
+        return null; // No crear cliente si no tiene celular
+      }
+  
       const payload = {
         Codigo_Asociado: toStr(c.Codigo_Asociado),
         documento_identidad: toStr(c.documento_identidad),
         nombre: s(c.nombre),
         apellido: toStr(c.Apellido_Paterno),
-        celular: normalizePhone(c.celular),
+        celular: celularNormalizado,
         Segmento: toStr(c.Segmento),
         email: toStr(c.email),
         Zona: toStr(c.Zona),
@@ -99,7 +105,7 @@ export async function POST(req, ctx) {
 
     return NextResponse.json({ ok: true, campanha_id: campanhaId, count: clienteIds.length, clientes: clienteIds });
   } catch (error) {
-    console.error("❌ Error al asociar clientes a campaña:", error);
+    console.error("❌ Error al asociar clientes a campaña:", error.message || error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

@@ -355,6 +355,7 @@ export async function POST(request) {
       let total = 0;
 
       if (esAccionComercial) {
+        console.log(`🔍 Filtrando por acción comercial con estado: "${estadoFrontend}"`);
         // ✅ PARA ESTADOS DE ACCIÓN COMERCIAL: Solo contar los que están en ese estado y es más reciente
         const clientesCandidatos = await prisma.cliente.findMany({
           select: {
@@ -372,14 +373,17 @@ export async function POST(request) {
             }
           }
         });
+        console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
 
         // Solo contar los que tienen acción comercial de ese estado y es más reciente
         clientesCandidatos.forEach(cliente => {
           const ultimaAccion = cliente.accion_comercial[0];
+          if (ultimaAccion) {
+          console.log("ultimaAccion:", ultimaAccion);}
           if (
             ultimaAccion &&
             ultimaAccion.estado === estadoFrontend &&
-            (!cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+            (cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
           ) {
             // Para acciones comerciales, todos los que califican son "completadas"
             completadas++;

@@ -5,9 +5,6 @@ const prisma = new PrismaClient();
 
 // Mapeo de estados del frontend a estados exactos de la base de datos
 const estadosMapping = {
-  'Interesado en reactivar': ['Interesado en reactivar'],
-  'Fecha de Pago': ['Fecha de Pago'],
-  'Indeciso / Informacion': ['Indeciso / Informacion', 'Indeciso', 'Información', 'Indeciso/Información'],
   'En seguimiento': ['En seguimiento'],
   'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
 };

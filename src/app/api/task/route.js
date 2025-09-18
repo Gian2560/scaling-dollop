@@ -9,10 +9,10 @@ const estadosMapping = {
   'Fecha de Pago': ['Fecha de Pago'],
   'Indeciso / Informacion': ['Indeciso / Informacion', 'Indeciso', 'Información', 'Indeciso/Información'],
 };
-const estadosAccionComercial = [
-  'En seguimiento',
-  'Promesa de Pago', 'Promesa de pago', 'Promesa pago','Promesa de Pago'
-];
+const estadosAccionComercial = {
+  'En seguimiento': ['En seguimiento'],
+  'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
+};
 // GET - Obtener clientes filtrados por estado
 export async function GET(request) {
   try {
@@ -29,8 +29,9 @@ export async function GET(request) {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
     const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
-    const esAccionComercial = estadosAccionComercial.includes(estado);
+    const esAccionComercial = Object.keys(estadosAccionComercial).includes(estado);
     let clientesFiltrados = []; // <--- DECLARAR AQUÍ
+    console.log('🔧 Filtros iniciales:', { estado });
 
     console.log('📅 Filtros de fecha:', {
       mesActual: ahora.getMonth() + 1,
@@ -38,9 +39,9 @@ export async function GET(request) {
       inicioMes: inicioMes.toISOString(),
       finMes: finMes.toISOString()
     });
-
     // ✅ PRIMERO: Verificar si hay clientes con ese estado
     if (esAccionComercial) {
+      console.log(`\n🔍 Filtrando por acción comercial con estado: "${estado}"`);
     // Buscar clientes cuya acción comercial más reciente sea de ese estado y más reciente que el estado del cliente
     const clientesCandidatos = await prisma.cliente.findMany({
       select: {
@@ -342,12 +343,12 @@ export async function POST(request) {
     const metricas = {};
     
     // Si no se especifican estados, calcular para todos los estados configurados
-    const todosLosEstados = [...Object.keys(estadosMapping), ...estadosAccionComercial];
+    const todosLosEstados = [...Object.keys(estadosMapping), ...Object.keys(estadosAccionComercial)];
     const estadosParaCalcular = estados.length > 0 ? estados : todosLosEstados;
     
     for (const estadoFrontend of estadosParaCalcular) {
-      const esAccionComercial = estadosAccionComercial.includes(estadoFrontend);
-      
+      const esAccionComercial = Object.keys(estadosAccionComercial).includes(estadoFrontend);
+
       console.log(`\n🎯 Procesando estado: "${estadoFrontend}" (${esAccionComercial ? 'ACCIÓN COMERCIAL' : 'ESTADO CLIENTE'})`);
       let pendientes = 0;
       let completadas = 0;

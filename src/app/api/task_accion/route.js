@@ -169,11 +169,11 @@ export async function GET(request) {
       // Si no tiene acciones comerciales, incluir el cliente
       if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
         console.log(`✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones comerciales - INCLUIDO`);
-        return true;
+        return false;
       }
 
       const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
-      const estadoMasReciente = fechaUltimoEstado > fechaUltimaAccion;
+      const estadoMasReciente = fechaUltimoEstado < fechaUltimaAccion;
       
       console.log(`🔄 Cliente ${cliente.cliente_id} (${cliente.nombre}):`);
       console.log(`   Fecha último estado: ${fechaUltimoEstado.toISOString()}`);
@@ -358,7 +358,7 @@ export async function POST(request) {
         const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
         
         // Comparar fechas para clasificar
-        if (fechaUltimoEstado > fechaUltimaAccion) {
+        if (fechaUltimoEstado < fechaUltimaAccion) {
           // Estado más reciente que acción -> PENDIENTE
           pendientes++;
           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Estado más reciente -> PENDIENTE`);

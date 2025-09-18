@@ -11,7 +11,7 @@ const estadosMapping = {
 };
 const estadosAccionComercial = [
   'En seguimiento',
-  'Promesa de Pago', 'Promesa de pago', 'Promesa pago'
+  'Promesa de Pago', 'Promesa de pago', 'Promesa pago','Promesa de Pago'
 ];
 // GET - Obtener clientes filtrados por estado
 export async function GET(request) {

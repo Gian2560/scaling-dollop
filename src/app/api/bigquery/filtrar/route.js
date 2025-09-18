@@ -18,7 +18,7 @@ export async function POST(req) {
       WITH base AS (
         SELECT bd_com.*
         FROM \`${project}.${dataset}.BD_Conglomerado_con_clusters\` bd_com
-        LEFT JOIN \`${project}.${dataset}.BD_ReingresosDiarios\` bd_dia
+        LEFT JOIN \`${project}.${dataset}.BD_ReingresosJunto\` bd_dia
           ON bd_com.N_Doc = bd_dia.Documento
         WHERE bd_dia.Documento IS NULL
       ),

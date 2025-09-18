@@ -227,7 +227,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                         <InputLabel>Nuevo estado</InputLabel>
                         <Select name="accion" value={clienteData.accion} onChange={handleChange}>
                             <MenuItem value="">Seleccionar acción</MenuItem>
-                            <MenuItem value="Promesa de pago">Promesa de pago</MenuItem>
+                            <MenuItem value="Promesa de Pago">Promesa de pago</MenuItem>
                             <MenuItem value="No interesado">No interesado</MenuItem>
                             <MenuItem value="En seguimiento">En seguimiento</MenuItem>
                             <MenuItem value="Reactivado">Reactivado</MenuItem>

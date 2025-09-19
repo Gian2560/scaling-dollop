@@ -5,9 +5,6 @@ const prisma = new PrismaClient();
 
 // Mapeo de estados del frontend a estados exactos de la base de datos
 const estadosMapping = {
-  'Interesado en reactivar': ['Interesado en reactivar'],
-  'Fecha de Pago': ['Fecha de Pago'],
-  'Indeciso / Informacion': ['Indeciso / Informacion', 'Indeciso', 'Información', 'Indeciso/Información'],
   'En seguimiento': ['En seguimiento'],
   'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
 };
@@ -169,11 +166,11 @@ export async function GET(request) {
       // Si no tiene acciones comerciales, incluir el cliente
       if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
         console.log(`✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones comerciales - INCLUIDO`);
-        return true;
+        return false;
       }
 
       const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
-      const estadoMasReciente = fechaUltimoEstado > fechaUltimaAccion;
+      const estadoMasReciente = fechaUltimoEstado < fechaUltimaAccion;
       
       console.log(`🔄 Cliente ${cliente.cliente_id} (${cliente.nombre}):`);
       console.log(`   Fecha último estado: ${fechaUltimoEstado.toISOString()}`);
@@ -276,7 +273,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Obtener estadísticas y métricas
+/* // POST - Obtener estadísticas y métricas
 export async function POST(request) {
   try {
     console.log('🚀 Iniciando POST /api/task para métricas');
@@ -335,7 +332,7 @@ export async function POST(request) {
         }
       });
 
-      console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
+      console.log(`📋 Candidoooooooooooooooooatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
 
       // ✅ CLASIFICAR EN PENDIENTES Y COMPLETADAS
       let pendientes = 0;
@@ -358,7 +355,7 @@ export async function POST(request) {
         const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
         
         // Comparar fechas para clasificar
-        if (fechaUltimoEstado > fechaUltimaAccion) {
+        if (fechaUltimoEstado < fechaUltimaAccion) {
           // Estado más reciente que acción -> PENDIENTE
           pendientes++;
           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Estado más reciente -> PENDIENTE`);
@@ -431,7 +428,7 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-}
+} */
 
 // PUT - Obtener estadísticas de mensajes enviados (acciones comerciales "Código entregado especial retadora")
 export async function PUT(request) {

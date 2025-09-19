@@ -8,10 +8,11 @@ const estadosMapping = {
   'Interesado en reactivar': ['Interesado en reactivar'],
   'Fecha de Pago': ['Fecha de Pago'],
   'Indeciso / Informacion': ['Indeciso / Informacion', 'Indeciso', 'Información', 'Indeciso/Información'],
+};
+const estadosAccionComercial = {
   'En seguimiento': ['En seguimiento'],
   'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
 };
-
 // GET - Obtener clientes filtrados por estado
 export async function GET(request) {
   try {
@@ -28,15 +29,55 @@ export async function GET(request) {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
     const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
-    
+    const esAccionComercial = Object.keys(estadosAccionComercial).includes(estado);
+    let clientesFiltrados = []; // <--- DECLARAR AQUÍ
+    console.log('🔧 Filtros iniciales:', { estado });
+
     console.log('📅 Filtros de fecha:', {
       mesActual: ahora.getMonth() + 1,
       añoActual: ahora.getFullYear(),
       inicioMes: inicioMes.toISOString(),
       finMes: finMes.toISOString()
     });
-
     // ✅ PRIMERO: Verificar si hay clientes con ese estado
+    if (esAccionComercial) {
+      console.log(`\n🔍 Filtrando por acción comercial con estado: "${estado}"`);
+    // Buscar clientes cuya acción comercial más reciente sea de ese estado y más reciente que el estado del cliente
+    const clientesCandidatos = await prisma.cliente.findMany({
+      select: {
+        cliente_id: true,
+        nombre: true,
+        apellido: true,
+        celular: true,
+        documento_identidad: true,
+        estado: true,
+        gestor: true,
+        fecha_creacion: true,
+        fecha_ultimo_estado: true,
+        score: true,
+        accion_comercial: {
+          select: {
+            estado: true,
+            fecha_accion: true
+          },
+          orderBy: { fecha_accion: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { fecha_creacion: 'desc' }
+    });
+
+    clientesFiltrados = clientesCandidatos.filter(cliente => {
+      const ultimaAccion = cliente.accion_comercial[0];
+      return (
+        ultimaAccion &&
+        estadosAccionComercial.includes(ultimaAccion.estado) &&
+        ultimaAccion.estado === estado &&
+        (!cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+      );
+    });
+
+  } else {    
     let estadosDB = [];
     if (estado) {
       estadosDB = estadosMapping[estado] || [estado];
@@ -94,7 +135,7 @@ export async function GET(request) {
         where: {
           estado: { in: estadosDB }
         },
-        take: 5 // Solo 5 para debug
+        take: 100 // Solo 5 para debug
       });
 
       console.log(`📋 Encontrados ${clientesDebug.length} clientes con estado "${estado}" (sin filtro de fecha):`);
@@ -158,7 +199,7 @@ export async function GET(request) {
     console.log(`🔍 Clientes candidatos encontrados: ${clientesCandidatos.length}`);
 
     // ✅ QUINTO: Filtrar clientes donde fecha_ultimo_estado > fecha_accion más reciente
-    const clientesFiltrados = clientesCandidatos.filter(cliente => {
+    clientesFiltrados = clientesCandidatos.filter(cliente => {
       if (!cliente.fecha_ultimo_estado) {
         console.log(`⚠️ Cliente ${cliente.cliente_id} sin fecha_ultimo_estado`);
         return false;
@@ -184,7 +225,7 @@ export async function GET(request) {
     });
 
     console.log(`🎯 Clientes finales después de filtro de acción comercial: ${clientesFiltrados.length}`);
-
+  }
     // Aplicar paginación a los clientes filtrados
     const totalClientesFiltrados = clientesFiltrados.length;
     const clientesPaginados = clientesFiltrados.slice(page * limit, (page + 1) * limit);
@@ -302,14 +343,65 @@ export async function POST(request) {
     const metricas = {};
     
     // Si no se especifican estados, calcular para todos los estados configurados
-    const estadosParaCalcular = estados.length > 0 ? estados : Object.keys(estadosMapping);
+    const todosLosEstados = [...Object.keys(estadosMapping), ...Object.keys(estadosAccionComercial)];
+    const estadosParaCalcular = estados.length > 0 ? estados : todosLosEstados;
     
     for (const estadoFrontend of estadosParaCalcular) {
+      const esAccionComercial = Object.keys(estadosAccionComercial).includes(estadoFrontend);
+
+      console.log(`\n🎯 Procesando estado: "${estadoFrontend}" (${esAccionComercial ? 'ACCIÓN COMERCIAL' : 'ESTADO CLIENTE'})`);
+      let pendientes = 0;
+      let completadas = 0;
+      let total = 0;
+
+      if (esAccionComercial) {
+        console.log(`🔍 Filtrando por acción comercial con estado: "${estadoFrontend}"`);
+        // ✅ PARA ESTADOS DE ACCIÓN COMERCIAL: Solo contar los que están en ese estado y es más reciente
+        const clientesCandidatos = await prisma.cliente.findMany({
+          select: {
+            cliente_id: true,
+            nombre: true,
+            estado: true,
+            fecha_ultimo_estado: true,
+            accion_comercial: {
+              where: {
+        estado: {
+          not: null,    // No sea null
+          not: ''       // No sea cadena vacía
+        }
+      },
+              select: {
+                estado: true,
+                fecha_accion: true
+              },
+              orderBy: { fecha_accion: 'desc' },
+              take: 1
+            }
+          }
+        });
+        console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
+
+        // Solo contar los que tienen acción comercial de ese estado y es más reciente
+        clientesCandidatos.forEach(cliente => {
+          const ultimaAccion = cliente.accion_comercial[0];
+          if (ultimaAccion) {
+          console.log("ultimaAccion:", ultimaAccion);}
+          if (
+            ultimaAccion &&
+            ultimaAccion.estado === estadoFrontend &&
+            (new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+          ) {
+            // Para acciones comerciales, todos los que califican son "completadas"
+            completadas++;
+            console.log(`   ✅ Cliente ${cliente.cliente_id}: Acción "${estadoFrontend}" más reciente -> COMPLETADA`);
+          }
+        });
+
+        total = completadas; // Para acciones comerciales no hay "pendientes"
+
+      } else {
+      
       const estadosDB = estadosMapping[estadoFrontend] || [estadoFrontend];
-      
-      console.log(`\n🎯 Procesando estado: "${estadoFrontend}" -> ${estadosDB}`);
-      
-      // ✅ OBTENER TODOS LOS CANDIDATOS (misma lógica que GET)
       const clientesCandidatos = await prisma.cliente.findMany({
         where: {
           estado: { in: estadosDB },
@@ -337,9 +429,7 @@ export async function POST(request) {
 
       console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
 
-      // ✅ CLASIFICAR EN PENDIENTES Y COMPLETADAS
-      let pendientes = 0;
-      let completadas = 0;
+
 
       clientesCandidatos.forEach(cliente => {
         if (!cliente.fecha_ultimo_estado) {
@@ -368,8 +458,8 @@ export async function POST(request) {
           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Acción más reciente -> COMPLETADA`);
         }
       });
-
-      const total = pendientes + completadas;
+      total = pendientes + completadas;
+    }
       
       metricas[estadoFrontend] = {
         total,

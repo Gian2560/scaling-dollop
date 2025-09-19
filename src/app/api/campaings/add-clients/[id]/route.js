@@ -16,9 +16,9 @@ const s = (v) => {
   const str = String(v).trim();
   return str === "" ? null : str;
 };
-export async function POST(req, ctx) {
+export async function POST(req, context) {
   try {
-    const { id } = ctx?.params?.then ? await ctx.params : (ctx.params || {});
+    const { id } = await context.params;         // ⬅️ importante
     const campanhaId = Number(id);
     if (!campanhaId || Number.isNaN(campanhaId)) {
       return NextResponse.json({ error: "ID de campaña no válido" }, { status: 400 });
@@ -74,8 +74,18 @@ export async function POST(req, ctx) {
 
     const items = [...clients, ...clientIds];
     // 1. Upsert clientes en paralelo
-    const clienteIds = (await Promise.all(items.map(getClienteId))).filter(Boolean);
+    // const clienteIds = (await Promise.all(items.map(getClienteId))).filter(Boolean);
+    // Usa chunks:
+    async function processInBatches(items, size, fn) {
+      const out = [];
+      for (let i = 0; i < items.length; i += size) {
+        const res = await Promise.all(items.slice(i, i + size).map(fn));
+        out.push(...res);
+      }
+      return out;
+    }
 
+    const clienteIds = (await processInBatches(items, 5, getClienteId)).filter(Boolean);
     // 2. Obtén los ya asociados en un solo query
     const yaAsociados = await prisma.cliente_campanha.findMany({
       where: {

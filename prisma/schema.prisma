@@ -16,6 +16,7 @@ model accion_comercial {
   estado              String?   @db.VarChar(25)
   fecha_accion        DateTime? @default(now()) @db.Timestamp(6)
   nota                String
+  gestor              String?   @db.VarChar(255)
   cliente             cliente?  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "accion_comercial_ibfk_1")
   cita                cita?     @relation(fields: [cita_id], references: [cita_id], onUpdate: NoAction, map: "accion_comercial_ibfk_2")
   pago                pago?     @relation(fields: [pago_id], references: [pago_id], onUpdate: NoAction, map: "accion_comercial_ibfk_3")

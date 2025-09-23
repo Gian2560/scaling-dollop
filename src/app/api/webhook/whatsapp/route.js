@@ -52,17 +52,10 @@ async function findClientByPhone(phoneNumber) {
 async function processAutoReply(clientPhone, messageText, clienteInfo) {
   try {
     console.log(`🤖 [RESPONSE] Cliente respondió: "${messageText}": información del cliente: ${JSON.stringify(clienteInfo)}`);
-    console.log(`🔍 [CLIENT_INFO] Información del cliente:`, JSON.stringify(clienteInfo, null, 2));
-
+    
     // Solo marcar que el cliente ha respondido
     if (clienteInfo?.cliente_campanha?.[0]) {
       const currentRecord = clienteInfo.cliente_campanha[0];
-      console.log(`📋 [CURRENT_RECORD] Registro actual:`, {
-        cliente_campanha_id: currentRecord.cliente_campanha_id,
-        estado_mensaje_actual: currentRecord.estado_mensaje,
-        whatsapp_message_id: currentRecord.whatsapp_message_id,
-        campanha_id: currentRecord.campanha_id
-      });
 
       await prisma.cliente_campanha.update({
         where: { cliente_campanha_id: currentRecord.cliente_campanha_id },

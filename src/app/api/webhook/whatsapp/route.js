@@ -51,50 +51,35 @@ async function findClientByPhone(phoneNumber) {
 // 🤖 Función para procesar respuestas automáticas
 async function processAutoReply(clientPhone, messageText, clienteInfo) {
   try {
-    console.log(`🤖 [RESPONSE] Cliente respondió: "${messageText}"`);
-    console.log(`� [PHONE] Número del cliente: ${clientPhone}`);
+    console.log(`🤖 [RESPONSE] Cliente respondió: "${messageText}": información del cliente: ${JSON.stringify(clienteInfo)}`);
+    console.log(`🔍 [CLIENT_INFO] Información del cliente:`, JSON.stringify(clienteInfo, null, 2));
 
     // Solo marcar que el cliente ha respondido
     if (clienteInfo?.cliente_campanha?.[0]) {
       const currentRecord = clienteInfo.cliente_campanha[0];
-      
-      console.log(`📋 [BEFORE_UPDATE] Cliente ID: ${clienteInfo.cliente_id}`);
-      console.log(`📋 [BEFORE_UPDATE] Campaña ID: ${currentRecord.cliente_campanha_id}`);
-      console.log(`📋 [BEFORE_UPDATE] Estado actual: "${currentRecord.estado_mensaje}"`);
-      console.log(`📋 [BEFORE_UPDATE] WhatsApp Message ID: ${currentRecord.whatsapp_message_id}`);
+      console.log(`📋 [CURRENT_RECORD] Registro actual:`, {
+        cliente_campanha_id: currentRecord.cliente_campanha_id,
+        estado_mensaje_actual: currentRecord.estado_mensaje,
+        whatsapp_message_id: currentRecord.whatsapp_message_id,
+        campanha_id: currentRecord.campanha_id
+      });
 
-      // 🔄 REALIZAR ACTUALIZACIÓN
-      const updateResult = await prisma.cliente_campanha.update({
+      await prisma.cliente_campanha.update({
         where: { cliente_campanha_id: currentRecord.cliente_campanha_id },
         data: {
           estado_mensaje: "replied",
           fecha_ultimo_estado: new Date(),
-          // ✅ PRESERVAR campos importantes
+          // ✅ PRESERVAR campos que no deben borrarse
           fecha_envio: currentRecord.fecha_envio,
           whatsapp_message_id: currentRecord.whatsapp_message_id
         }
       });
       
-      console.log(`✅ [UPDATE_SUCCESS] Cliente ${clienteInfo.cliente_id} actualizado exitosamente`);
-      console.log(`✅ [UPDATE_SUCCESS] Nuevo estado: "${updateResult.estado_mensaje}"`);
-      console.log(`✅ [UPDATE_SUCCESS] Fecha actualización: ${updateResult.fecha_ultimo_estado}`);
-      
-      // 🔍 VERIFICACIÓN ADICIONAL: Consultar el registro para confirmar
-      const verification = await prisma.cliente_campanha.findUnique({
-        where: { cliente_campanha_id: currentRecord.cliente_campanha_id }
-      });
-      
-      console.log(`🔍 [VERIFICATION] Estado en BD después de update: "${verification.estado_mensaje}"`);
-      console.log(`🔍 [VERIFICATION] Record verificado exitosamente`);
-      
-    } else {
-      console.log(`❌ [NO_CAMPAIGN] Cliente ${clienteInfo?.cliente_id || 'DESCONOCIDO'} no tiene campañas asociadas`);
+      console.log(`📊 [STATUS] Cliente marcado como "replied"`);
     }
 
   } catch (error) {
-    console.error("❌ [AUTO_REPLY] Error completo:", error);
-    console.error("❌ [AUTO_REPLY] Stack trace:", error.stack);
-    console.error("❌ [AUTO_REPLY] Mensaje del error:", error.message);
+    console.error("❌ [AUTO_REPLY] Error actualizando estado:", error);
   }
 }
 

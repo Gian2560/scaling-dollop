@@ -267,6 +267,7 @@ const ActionComercialModal = ({ open, onClose, cliente, gestores, onSave }) => {
                             <MenuItem value="Personal">Personal</MenuItem>
                             <MenuItem value="Mal asesoramiento">Mal asesoramiento</MenuItem>
                             <MenuItem value="Por negociar">Por negociar</MenuItem>
+                            <MenuItem value="No contesta">No contesta</MenuItem>
                             <MenuItem value="Sin determinar">Sin determinar</MenuItem>
                         </Select>
                     </FormControl>

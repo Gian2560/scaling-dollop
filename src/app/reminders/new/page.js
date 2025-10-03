@@ -68,30 +68,6 @@ export default function CampaignPage() {
   const [variableMappings, setVariableMappings] = useState({})    // { "1": "nombre", "2": "telefono", … }
 
 
-  // useEffect(() => {
-  //   const fetchDatabases = async () => {
-  //     try {
-  //       const response = await axiosInstance.get("/bigquery"); // Solicitud GET al endpoint de bases de datos
-  //       console.log("Respuesta de BigQuery:", response.data);
-  //       useDatabases(response.data.tables); // Guarda las bases de datos en el estado 
-  //       console.log("Bases de datos obtenidas:", response.data);
-  //     } catch (error) {
-  //       console.error("Error al obtener bases de datos:", error);
-  //     }
-  //   }
-  //   const fetchTemplates = async () => {
-  //     try {
-  //       const response = await axiosInstance.get("/plantillas"); // Solicitud GET al endpoint de plantillas
-  //       setTemplates(response.data); // Guarda las plantillas en el estado
-  //       console.log("Plantillas obtenidas:", response.data);
-  //     } catch (error) {
-  //       console.error("Error al obtener plantillas:", error);
-  //     }
-  //   };
-  //   fetchDatabases();
-  //   fetchTemplates();
-  // }, []);
-  // Carga inicial: plantillas, filtros (segmento y asesor) y data inicial
   useEffect(() => {
     const boot = async () => {
       try {
@@ -124,11 +100,7 @@ export default function CampaignPage() {
     fetchTemplates();
   }, []);
 
-  //GIAN
-  // const handleTemplateChange = (event) => {
-  //   const selectedTemplate = event.target.value;
-  //   setTemplate(selectedTemplate);
-  // };
+ 
   //YOMI
   const handleTemplateChange = event => {
     const tplId = event.target.value
@@ -148,40 +120,6 @@ export default function CampaignPage() {
     }
   }
 
-
-
-
-  // const handleSubmit = async () => {
-  //   if (clients.length === 0) {
-  //     alert("No hay clientes para agregar a la campaña.");
-  //     return;
-  //   }
-
-  //   const campaignData = {
-  //     nombre_campanha: campaignName,
-  //     descripcion: "Descripción de campaña",
-  //     template_id: template,
-  //     fecha_inicio: sendDate,
-  //     fecha_fin: sendTime,
-  //     clients: clients,  // Aquí envías toda la información de los clientes
-  //     variableMappings,
-  //   };
-
-  //   try {
-  //     // Enviar solicitud para crear la campaña
-  //     const response = await axiosInstance.post("/campaings", campaignData);
-
-  //     const campanhaId = response.data.campanha_id;  // Obtener el ID de la campaña creada
-
-  //     console.log("Campaña creada con ID:", campanhaId);
-
-  //     // Ahora los clientes serán automáticamente asociados con la campaña
-  //     alert("Campaña creada y clientes asociados exitosamente.");
-  //   } catch (error) {
-  //     console.error("Error al crear campaña o agregar clientes:", error);
-  //     alert("Hubo un problema al crear la campaña o agregar los clientes.");
-  //   }
-  // };
   const handleSubmit = async () => {
     if (!campaignName) {
       alert("Ingresa el nombre de la campaña.");
@@ -192,6 +130,7 @@ export default function CampaignPage() {
       return;
     }
 
+  
     try {
       // 1) crear campaña
       const createRes = await axiosInstance.post("/campaings", {
@@ -289,98 +228,7 @@ export default function CampaignPage() {
     white: "#fff",
   };
 
-  // --- NUEVO: aplicar filtros y enviar al backend -----------------------------
-  // ── NUEVO: arma el payload y envíalo ─────────────────────────────
-  // const applyFilters = async () => {
-  //   if (!selectedDatabase) {
-  //     alert('Selecciona una base de datos antes de filtrar');
-  //     return;
-  //   }
-
-  //   // Array que contendrá 0-3 filtros, según lo que elija el usuario
-  //   const filters = [];
-
-  //   if (selectedColumns.segmento) {
-  //     filters.push({
-  //       type: 'segmentacion',
-  //       column: selectedColumns.segmento, // nombre de la columna
-  //       value: clientSegment             // valor elegido en el <Select>
-  //     });
-  //   }
-
-  //   if (selectedColumns.cluster) {
-  //     filters.push({
-  //       type: 'cluster',
-  //       column: selectedColumns.cluster,
-  //       value: cluster
-  //     });
-  //   }
-
-  //   if (selectedColumns.estrategia) {
-  //     filters.push({
-  //       type: 'estrategia',
-  //       column: selectedColumns.estrategia,
-  //       value: strategy
-  //     });
-  //   }
-  //   if (selectedColumns.fechaCuota) {
-  //     filters.push({
-  //       type: 'fechaCuota',
-  //       column: selectedColumns.fechaCuota,
-  //       value: fecha
-  //     });
-  //   }
-
-  //   if (selectedColumns.linea) {
-  //     filters.push({
-  //       type: 'Linea',
-  //       column: selectedColumns.linea,
-  //       value: linea
-  //     });
-  //   }
-
-  //   if (filters.length === 0) {
-  //     alert('Elige al menos un filtro antes de continuar');
-  //     return;
-  //   }
-
-  //   const payload = {
-  //     tipoCampana: tipoCampaña, // "Recordatorio" o "Fidelizacion"
-  //     table: selectedDatabase, // nombre de la tabla o vista en BigQuery
-  //     filters                  // array con los filtros
-  //   };
-
-  //   try {
-  //     console.log('Enviando payload de filtros:', payload);
-  //     const { data } = await axiosInstance.post('/bigquery/filtrar', payload);
-  //     console.log('Datos filtrados →', data);
-  //     let clientsProcesados = data.rows;
-  //     if (tipoCampaña === "Fidelizacion") {
-  //       const opcionesFecha = { weekday: 'long', day: 'numeric', month: 'long' };
-  //       clientsProcesados = data.rows.map(row => {
-  //         let fechaLegible = '';
-  //         // Verifica si feccuota existe y tiene la propiedad value
-  //         if (row.feccuota && row.feccuota.value) {
-  //           const fechaObj = new Date(row.feccuota.value);
-  //           if (!isNaN(fechaObj.getTime())) {
-  //             fechaLegible = fechaObj.toLocaleDateString('es-ES', opcionesFecha);
-  //           }
-  //         }
-  //         return {
-  //           ...row,
-  //           feccuota: fechaLegible
-  //         };
-  //       });
-  //     }
-  //     setClients(clientsProcesados);
-  //     console.log('Datos filtrados:', data);
-  //     // TODO: guarda "data" en estado o muéstralo en pantalla
-  //   } catch (error) {
-  //     console.error('Error al aplicar filtros:', error);
-  //     alert('Ocurrió un problema al aplicar los filtros');
-  //   }
-  // };
-
+  
     const applyFilters = async () => {
       try {//nuevo
         setLoadingColumns(true);
@@ -404,19 +252,7 @@ export default function CampaignPage() {
 
 
 
-  // ─────────────────────────────────────────────────────────────────
-  // const columnsgrid = [
-  //   { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 180 },
-  //   { field: 'nombre', headerName: 'Nombre', width: 180 },
-  //   { field: 'telefono', headerName: 'Teléfono', width: 180 },
-  //   { field: 'segmentacion', headerName: 'Segmento', width: 180 },
-  //   { field: 'monto', headerName: 'Monto', width: 150 },
-  //   { field: 'feccuota', headerName: 'Fecha Cuota', width: 180 },
-  //   { field: 'email', headerName: 'Correo', width: 220 },
-  //   { field: 'modelo', headerName: 'Modelo', width: 180 },
-  //   { field: 'codpago', headerName: 'Código Pago', width: 180 },
-  //   { field: 'Cta_Act_Pag', headerName: 'Cuotas', width: 120 },
-  // ];
+  
    const columnsgrid = [
     { field: 'Codigo_Asociado', headerName: 'Código Asociado', width: 170 },
     { field: 'documento_identidad', headerName: 'N° Doc', width: 140 },
@@ -511,136 +347,7 @@ export default function CampaignPage() {
 
           <Divider sx={{ mb: 5 }} />
 
-          {/* SEGMENTACION */}
-          {/* <Typography
-            variant="h6"
-            sx={{ color: colors.darkBlue, fontWeight: "700", mb: 3, borderBottom: `3px solid ${colors.primaryBlue}`, pb: 1 }}
-          >
-            Segmentación
-          </Typography>
-
-          <Grid container spacing={4} mb={5}>
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Segmento</InputLabel>
-                <Select
-                  value={clientSegment}
-                  onChange={(e) => setClientSegment(e.target.value)}
-                  label="Segmento"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-                  {segments.map((seg) => (
-                    <MenuItem key={seg} value={seg}>
-                      {seg}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Cluster</InputLabel>
-                <Select
-                  value={cluster}
-                  onChange={(e) => setCluster(e.target.value)}
-                  label="Cluster"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-
-                  {clusters.map((cl) => (
-                    <MenuItem key={cl} value={cl}>
-                      {cl}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Estrategia</InputLabel>
-                <Select
-                  value={strategy}
-                  onChange={(e) => setStrategy(e.target.value)}
-                  label="Estrategia"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-
-                  {strategies.map((str) => (
-                    <MenuItem key={str} value={str}>
-                      {str}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Fecha Cuota</InputLabel>
-                <Select
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  label="Fecha Cuota"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-
-                  {fechaCuotaColumn.map((str) => (
-                    <MenuItem key={str} value={str}>
-                      {str}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Linea</InputLabel>
-                <Select
-                  value={linea}
-                  onChange={(e) => setLinea(e.target.value)}
-                  label="Fecha Cuota"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Todos">Todos</MenuItem>
-
-                  {lineaValue.map((str) => (
-                    <MenuItem key={str} value={str}>
-                      {str}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Tipo Campaña</InputLabel>
-                <Select
-                  value={tipoCampaña} // Por defecto "Fidelización"
-                  onChange={(e) => setTipoCampaña(e.target.value)}
-                  label="Tipo Campaña"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  <MenuItem value="Recordatorio">Recordatorio</MenuItem>
-                  <MenuItem value="Fidelizacion">Fidelización</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid> */}
-
-            {/* Botón para aplicar los filtros */}
-            {/* <Grid item xs={12}>
-              <Button variant="contained" color="primary" onClick={applyFilters} sx={{ mt: 2 }}>
-                Aplicar Filtros
-              </Button>
-            </Grid>
-          </Grid> */}
+          
           <Typography variant="h6" sx={{ /* ...estilos... */ }}>Segmentación</Typography>
           <Grid container spacing={4} mb={5}>
             <Grid item xs={12} sm={6} md={4}>
@@ -698,19 +405,7 @@ export default function CampaignPage() {
             {loadingColumns ? (
               <CircularProgress sx={{ display: "block", margin: "0 auto" }} /> // Mostrar cargando
             ) : (
-              // <DataGrid
-              //   rows={clients.map((client, index) => ({
-              //     ...client,
-              //     id: client.telefono || index,  // Asegúrate de que 'rows' tenga un 'id' único
-              //   }))}
-              //   columns={columnsgrid}  // Utilizando el arreglo columnsgrid para definir las columnas
-              //   pageSize={5}
-              //   rowsPerPageOptions={[5, 10, 20]}
-              //   pagination
-              //   checkboxSelection
-              //   disableSelectionOnClick
-              //   loading={loadingColumns}
-              // />
+              
                 <DataGrid
                   rows={clients.map((r, i) => ({ ...r, id: `${r.N_Doc || i}-${r.Codigo_Asociado || 'X'}` }))}
                   columns={columnsgrid}
@@ -726,51 +421,7 @@ export default function CampaignPage() {
           </Box>
           <Divider sx={{ mb: 5 }} />
 
-          {/* VARIABLES */}
-          {/*<Typography
-            variant="h6"
-            sx={{ color: colors.darkBlue, fontWeight: "700", mb: 3, borderBottom: `3px solid ${colors.primaryBlue}`, pb: 1 }}
-          >
-            Variables adicionales
-          </Typography>
-
-          <Grid container spacing={4} mb={5}>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Variable 1</InputLabel>
-                <Select
-                  value={variable1}
-                  onChange={(e) => setVariable1(e.target.value)}
-                  label="Variable 1"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  {variables.map((v) => (
-                    <MenuItem key={v} value={v}>
-                      {v}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: colors.darkBlue, fontWeight: 600 }}>Variable 2</InputLabel>
-                <Select
-                  value={variable2}
-                  onChange={(e) => setVariable2(e.target.value)}
-                  label="Variable 2"
-                  sx={{ bgcolor: colors.white, borderRadius: 2, "& .MuiSelect-select": { fontWeight: 600 } }}
-                >
-                  {variables.map((v) => (
-                    <MenuItem key={v} value={v}>
-                      {v}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>*/}
+          
 
           <Divider sx={{ mb: 5 }} />
 
@@ -849,53 +500,7 @@ export default function CampaignPage() {
 
           <Divider sx={{ mb: 5 }} />
 
-          {/* FECHA Y HORA */}
-          {/*<Typography
-            variant="h6"
-            sx={{ color: colors.darkBlue, fontWeight: "700", mb: 3, borderBottom: `3px solid ${colors.primaryBlue}`, pb: 1 }}
-          >
-            Fecha y Hora de Envío
-          </Typography>*/}
-
-          {/*<Grid container spacing={4} mb={4}>
-            <Grid item xs={12} sm={6}>
-              <DatePicker
-                label="Fecha de Envío"
-                value={sendDate}
-                onChange={setSendDate}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    fullWidth
-                    sx={{
-                      bgcolor: colors.white,
-                      borderRadius: 2,
-                      "& .MuiInputBase-input": { fontWeight: 600 },
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TimePicker
-                label="Hora de Envío"
-                value={sendTime}
-                onChange={setSendTime}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    fullWidth
-                    sx={{
-                      bgcolor: colors.white,
-                      borderRadius: 2,
-                      "& .MuiInputBase-input": { fontWeight: 600 },
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-          </Grid>*/}
+          
 
           <Box textAlign="center" mt={6}>
             <Button

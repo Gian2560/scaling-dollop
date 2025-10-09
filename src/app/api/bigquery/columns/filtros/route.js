@@ -106,7 +106,7 @@ export async function GET(req) {
     const url = new URL(req.url);
     const projectId = 'peak-emitter-350713';
     const datasetId = 'FR_Reingresos_output';    // <-- CAMBIO
-    const tableName = 'BD_Conglomerado_con_clusters';
+    const tableName = 'BD_ENVIOS_SAYA_20251003';
 
     // Distintos Segmento desde BD_SegmentacionFinal
     const qSegmento = `
@@ -119,7 +119,7 @@ export async function GET(req) {
     // Distintos Asesor desde BD_AsignadaGeneralAgosto
     const qAsesor = `
       SELECT DISTINCT Asesor
-      FROM \`${projectId}.${datasetId}.BD_Conglomerado_con_clusters\`
+      FROM \`${projectId}.${datasetId}.BD_ENVIOS_SAYA_20251003\`
       WHERE Asesor IS NOT NULL
       ORDER BY Asesor
     `;

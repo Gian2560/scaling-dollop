@@ -121,45 +121,74 @@ export default function CampaignPage() {
   }
 
   const handleSubmit = async () => {
-    if (!campaignName) {
-      alert("Ingresa el nombre de la campaña.");
-      return;
-    }
-    if (!clients.length) {
+    // if (!campaignName) {
+    //   alert("Ingresa el nombre de la campaña.");
+    //   return;
+    // }
+    // if (!clients.length) {
+    //   alert("No hay clientes para agregar a la campaña.");
+    //   return;
+    // }
+
+  
+    // try {
+    //   // 1) crear campaña
+    //   const createRes = await axiosInstance.post("/campaings", {
+    //     nombre_campanha: campaignName,
+    //     descripcion: "Descripción de campaña",
+    //     template_id: Number(template) || null,
+    //     clients: clients,
+    //     fecha_inicio: sendDate,
+    //     fecha_fin: null,
+    //     variableMappings,
+    //   });
+
+    //   // tu POST /api/campaings devuelve { message, campanha }
+    //   const campanhaId = createRes.data?.campanha?.campanha_id;
+    //   if (!campanhaId) throw new Error("No se recibió campanha_id al crear la campaña.");
+
+    //   // 2) asociar clientes a la campaña
+    //   await axiosInstance.post(`/campaings/add-clients/${campanhaId}`, {
+    //     clients, // ← ya normalizados
+    //   });
+
+    //   alert("Campaña creada y clientes asociados exitosamente.");
+    // } catch (error) {
+    //   console.error("❌ Error al crear campaña o asociar clientes:", {
+    //     status: error.response?.status,
+    //     url: error.response?.config?.url,
+    //     data: error.response?.data || error.message,
+    //   });
+    //   alert("Hubo un problema al crear la campaña o asociar los clientes.");
+    // }
+    if (clients.length === 0) {
       alert("No hay clientes para agregar a la campaña.");
       return;
     }
 
-  
+    const campaignData = {
+      nombre_campanha: campaignName,
+      descripcion: "Descripción de campaña",
+      template_id: template,
+      fecha_inicio: sendDate,
+      fecha_fin: sendTime,
+      clients: clients,  // Aquí envías toda la información de los clientes
+      variableMappings,
+    };
+
     try {
-      // 1) crear campaña
-      const createRes = await axiosInstance.post("/campaings", {
-        nombre_campanha: campaignName,
-        descripcion: "Descripción de campaña",
-        template_id: Number(template) || null,
-        clients: clients,
-        fecha_inicio: sendDate,
-        fecha_fin: null,
-        variableMappings,
-      });
+      // Enviar solicitud para crear la campaña
+      const response = await axiosInstance.post("/campaings/add-clients", campaignData);
 
-      // tu POST /api/campaings devuelve { message, campanha }
-      const campanhaId = createRes.data?.campanha?.campanha_id;
-      if (!campanhaId) throw new Error("No se recibió campanha_id al crear la campaña.");
+      const campanhaId = response.data.campanha_id;  // Obtener el ID de la campaña creada
 
-      // 2) asociar clientes a la campaña
-      await axiosInstance.post(`/campaings/add-clients/${campanhaId}`, {
-        clients, // ← ya normalizados
-      });
+      console.log("Campaña creada con ID:", campanhaId);
 
+      // Ahora los clientes serán automáticamente asociados con la campaña
       alert("Campaña creada y clientes asociados exitosamente.");
     } catch (error) {
-      console.error("❌ Error al crear campaña o asociar clientes:", {
-        status: error.response?.status,
-        url: error.response?.config?.url,
-        data: error.response?.data || error.message,
-      });
-      alert("Hubo un problema al crear la campaña o asociar los clientes.");
+      console.error("Error al crear campaña o agregar clientes:", error);
+      alert("Hubo un problema al crear la campaña o agregar los clientes.");
     }
   };
 

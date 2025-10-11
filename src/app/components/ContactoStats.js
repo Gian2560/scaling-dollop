@@ -115,11 +115,7 @@ export default function ContactoStats({ campaignId }) {
   };
 
   if (loading) {
-    return (
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <CircularProgress size={60} />
-      </Container>
-    );
+    return null;
   }
 
   if (error || !statsData) {

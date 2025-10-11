@@ -20,13 +20,14 @@ const useCampaigns = () => {
   useEffect(() => {
     fetchTemplates();
     fetchCampaigns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, pagination.pageSize]);
 
   const fetchCampaigns = async () => {
     setLoading(true);
     setError(null);
     try {
-        const { campaigns, totalCount } = await getCampaigns();
+        const { campaigns, totalCount } = await getCampaigns(pagination.page, pagination.pageSize);
         const formattedCampaigns = campaigns.map((campaign) => ({
             ...campaign,
             id: campaign.campanha_id, 

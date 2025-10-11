@@ -554,7 +554,7 @@ export default function ContactoStats({ campaignId }) {
                 </ResponsiveContainer>
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary" fontStyle="italic" fontSize="12px">
-                    💡 Los códigos de error más frecuentes pueden indicar problemas sistemáticos
+                    Los códigos de error más frecuentes pueden indicar problemas sistemáticos
                   </Typography>
                 </Box>
               </CardContent>

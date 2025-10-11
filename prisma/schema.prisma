@@ -144,7 +144,7 @@ model conversacion {
 model historico_estado {
   historico_estado_id Int       @id @default(autoincrement())
   cliente_id          Int
-  estado              String    @db.VarChar(25)
+  estado              String
   fecha_estado        DateTime? @default(now()) @db.Timestamp(6)
   detalle             String?
   cliente             cliente   @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "historico_estado_ibfk_1")
@@ -240,4 +240,34 @@ model usuario {
   activo     Boolean  @default(true)
   persona    persona?
   rol        rol?     @relation(fields: [rol_id], references: [rol_id], onUpdate: NoAction, map: "usuario_fk_rol")
+}
+
+model mensaje_out {
+  id_msg               String                 @id
+  phone_to             String
+  template_name        String
+  template_lang        String
+  campanha_id          String?
+  sent_at              DateTime               @default(now()) @db.Timestamp(6)
+  mensaje_status_event mensaje_status_event[]
+
+  @@index([campanha_id], map: "idx_mensaje_out_campanha")
+  @@index([phone_to], map: "idx_mensaje_out_phone_to")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mensaje_status_event {
+  id                BigInt      @id @default(autoincrement())
+  id_msg            String
+  estado            String
+  ts_unix           BigInt?
+  recipient_id      String?
+  pricing_json      Json?
+  conversation_json Json?
+  errors_json       Json?
+  created_at        DateTime    @default(now()) @db.Timestamp(6)
+  mensaje_out       mensaje_out @relation(fields: [id_msg], references: [id_msg], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([estado], map: "idx_mse_estado")
+  @@index([id_msg, created_at(sort: Desc)], map: "idx_mse_idmsg_created")
 }

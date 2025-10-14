@@ -70,23 +70,44 @@ const fetchCampaignStats = async (campaignId) => {
   }
 };
 
-// Función para exportar CSV
-const exportToCSV = (data, filename) => {
+// Función para exportar CSV con traducciones (OPTIMIZADA)
+const exportToCSV = async (data, filename, translatedErrors = {}) => {
   if (!data || data.length === 0) {
     alert('No hay datos para exportar');
     return;
   }
 
   const headers = ['Nombre', 'Celular', 'Documento', 'Estado', 'Código Error', 'Mensaje Error', 'Fecha Envío'];
-  const rows = data.map(row => [
-    row.nombre || '',
-    row.celular || '',
-    row.documento || '',
-    row.estado || '',
-    row.errorCode || '',
-    row.errorMessage || '',
-    new Date(row.fechaEnvio).toLocaleString('es-PE'),
-  ]);
+  
+  // ✅ OPTIMIZACIÓN: Reutilizar traducciones ya cargadas
+  const rows = await Promise.all(data.map(async row => {
+    let translatedErrorMessage = row.errorMessage || '';
+    
+    // Solo traducir si hay mensaje de error
+    if (translatedErrorMessage && translatedErrorMessage.trim() !== '') {
+      // 🚀 REUTILIZAR traducción del estado si existe
+      if (row.errorCode && translatedErrors[row.errorCode]) {
+        translatedErrorMessage = translatedErrors[row.errorCode];
+      } else {
+        // Solo traducir si no existe en caché
+        try {
+          translatedErrorMessage = await translateText(translatedErrorMessage);
+        } catch (error) {
+          console.error('Error traduciendo mensaje:', error);
+        }
+      }
+    }
+    
+    return [
+      row.nombre || '',
+      row.celular || '',
+      row.documento || '',
+      row.estado || '',
+      row.errorCode || '',
+      translatedErrorMessage,
+      new Date(row.fechaEnvio).toLocaleString('es-PE'),
+    ];
+  }));
 
   const csvContent = [
     headers.join(','),
@@ -141,11 +162,12 @@ export default function ContactoStats({ campaignId }) {
     loadStats();
   }, [campaignId]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (statsData?.contactabilityDetails) {
-      exportToCSV(
+      await exportToCSV(
         statsData.contactabilityDetails,
-        `contactabilidad_campana_${campaignId}_${new Date().toISOString().split('T')[0]}.csv`
+        `contactabilidad_campana_${campaignId}_${new Date().toISOString().split('T')[0]}.csv`,
+        translatedErrors
       );
     }
   };

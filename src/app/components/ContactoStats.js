@@ -35,6 +35,29 @@ const ESTADO_COLORS = {
   'failed': '#f44336',
 };
 
+// Función para traducir texto usando Google Translate API gratuita
+const translateText = async (text, targetLang = 'es') => {
+  if (!text) return text;
+  
+  try {
+    // Usar la API gratuita de Google Translate (sin autenticación)
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    // La respuesta está en data[0][0][0]
+    if (data && data[0] && data[0][0] && data[0][0][0]) {
+      return data[0][0][0];
+    }
+    
+    return text; // Si falla, retornar el texto original
+  } catch (error) {
+    console.error('Error translating:', error);
+    return text; // Si hay error, retornar el texto original
+  }
+};
+
 // Función para obtener estadísticas de campaña
 const fetchCampaignStats = async (campaignId) => {
   try {
@@ -85,6 +108,7 @@ export default function ContactoStats({ campaignId }) {
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [translatedErrors, setTranslatedErrors] = useState({});
 
   useEffect(() => {
     const loadStats = async () => {
@@ -94,6 +118,18 @@ export default function ContactoStats({ campaignId }) {
         try {
           const data = await fetchCampaignStats(campaignId);
           setStatsData(data);
+          
+          // Traducir los mensajes de error
+          if (data.errorData && data.errorData.length > 0) {
+            const translations = {};
+            for (const errorItem of data.errorData) {
+              if (errorItem.message) {
+                const translated = await translateText(errorItem.message);
+                translations[errorItem.code] = translated;
+              }
+            }
+            setTranslatedErrors(translations);
+          }
         } catch (err) {
           setError('Error al cargar estadísticas');
           console.error(err);
@@ -532,13 +568,17 @@ export default function ContactoStats({ campaignId }) {
                     <Tooltip 
                       content={({ payload }) => {
                         if (payload && payload[0]) {
+                          const errorCode = payload[0].payload.code;
+                          const originalMessage = payload[0].payload.message;
+                          const translatedMessage = translatedErrors[errorCode] || originalMessage;
+                          
                           return (
-                            <Paper sx={{ p: 2 }}>
-                              <Typography variant="body2" fontWeight="bold">
-                                Código: {payload[0].payload.code}
+                            <Paper sx={{ p: 2, maxWidth: 350 }}>
+                              <Typography variant="body2" fontWeight="bold" color="error">
+                                Código: {errorCode}
                               </Typography>
-                              <Typography variant="body2" fontSize="12px">
-                                {payload[0].payload.message}
+                              <Typography variant="body2" fontSize="12px" sx={{ mt: 1, mb: 1 }}>
+                                {translatedMessage}
                               </Typography>
                               <Typography variant="body2" color="primary" fontWeight="bold">
                                 Cantidad: {payload[0].value}

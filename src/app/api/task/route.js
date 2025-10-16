@@ -356,71 +356,71 @@ export async function POST(request) {
 
       if (esAccionComercial) {
         // 🔁 Normaliza a los estados reales de tu BD (pueden ser varios alias)
-        const estadosDB = estadosAccionComercial[estadoFrontend] || [estadoFrontend];
-        console.log(`🔍 Filtrando por acción comercial con estado: "${estadoFrontend}"`);
-        // ✅ PARA ESTADOS DE ACCIÓN COMERCIAL: Solo contar los que están en ese estado y es más reciente
-        const clientesCandidatos = await prisma.cliente.findMany({
-          where: {
-            accion_comercial: {
-              some: {
-                estado: { in: estadosDB }
-              }
-            }
-          },
-          select: {
-            cliente_id: true,
-            nombre: true,
-            estado: true,
-            fecha_ultimo_estado: true,
-            // accion_comercial: {
-            //   where: {
-            //     estado: {
-            //       not: null,    // No sea null
-            //       not: ''       // No sea cadena vacía
-            //     }
-            //   },
-            //   select: {
-            //     estado: true,
-            //     fecha_accion: true
-            //   },
-            //   orderBy: { fecha_accion: 'desc' },
-            //   take: 1
-            // }
-            // Trae SOLO la última acción de ese estado (o alias) para comparar fechas
-            accion_comercial: {
-              where: { estado: { in: estadosDB } },
-              select: { estado: true, fecha_accion: true },
-              orderBy: { fecha_accion: 'desc' },
-              take: 1
-            }
-          }
-        });
-        console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
-        //let completadas = 0;
-        // Solo contar los que tienen acción comercial de ese estado y es más reciente
-        clientesCandidatos.forEach(cliente => {
-          const ultimaAccion = cliente.accion_comercial[0];
-          if (ultimaAccion) {
-          console.log("ultimaAccion:", ultimaAccion);}
-          if (
-            ultimaAccion &&
-            ultimaAccion.estado === estadosDB &&
-            (new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
-          ) {
-            // Para acciones comerciales, todos los que califican son "completadas"
-            completadas++;
-            console.log(`   ✅ Cliente ${cliente.cliente_id}: Acción "${estadoFrontend}" más reciente -> COMPLETADA`);
-          }
-        });
+        // const estadosDB = estadosAccionComercial[estadoFrontend] || [estadoFrontend];
+        // console.log(`🔍 Filtrando por acción comercial con estado: "${estadoFrontend}"`);
+        // // ✅ PARA ESTADOS DE ACCIÓN COMERCIAL: Solo contar los que están en ese estado y es más reciente
+        // const clientesCandidatos = await prisma.cliente.findMany({
+        //   where: {
+        //     accion_comercial: {
+        //       some: {
+        //         estado: { in: estadosDB }
+        //       }
+        //     }
+        //   },
+        //   select: {
+        //     cliente_id: true,
+        //     nombre: true,
+        //     estado: true,
+        //     fecha_ultimo_estado: true,
+        //     // accion_comercial: {
+        //     //   where: {
+        //     //     estado: {
+        //     //       not: null,    // No sea null
+        //     //       not: ''       // No sea cadena vacía
+        //     //     }
+        //     //   },
+        //     //   select: {
+        //     //     estado: true,
+        //     //     fecha_accion: true
+        //     //   },
+        //     //   orderBy: { fecha_accion: 'desc' },
+        //     //   take: 1
+        //     // }
+        //     // Trae SOLO la última acción de ese estado (o alias) para comparar fechas
+        //     accion_comercial: {
+        //       where: { estado: { in: estadosDB } },
+        //       select: { estado: true, fecha_accion: true },
+        //       orderBy: { fecha_accion: 'desc' },
+        //       take: 1
+        //     }
+        //   }
+        // });
+        // console.log(`📋 Candidatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
+        // //let completadas = 0;
+        // // Solo contar los que tienen acción comercial de ese estado y es más reciente
+        // clientesCandidatos.forEach(cliente => {
+        //   const ultimaAccion = cliente.accion_comercial[0];
+        //   if (ultimaAccion) {
+        //   console.log("ultimaAccion:", ultimaAccion);}
+        //   if (
+        //     ultimaAccion &&
+        //     ultimaAccion.estado === estadosDB &&
+        //     (new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+        //   ) {
+        //     // Para acciones comerciales, todos los que califican son "completadas"
+        //     completadas++;
+        //     console.log(`   ✅ Cliente ${cliente.cliente_id}: Acción "${estadoFrontend}" más reciente -> COMPLETADA`);
+        //   }
+        // });
 
-        total = completadas; // Para acciones comerciales no hay "pendientes"
-        metricas[estadoFrontend] = {
-            total,
-            pendientes: 0,
-            completados: completadas,
-            porcentajeCompletado: total > 0 ? Math.round((completadas / total) * 100) : 0,
-        };
-        continue;
+        // total = completadas; // Para acciones comerciales no hay "pendientes"
+        // metricas[estadoFrontend] = {
+        //     total,
+        //     pendientes: 0,
+        //     completados: completadas,
+        //     porcentajeCompletado: total > 0 ? Math.round((completadas / total) * 100) : 0,
+        // };
+        // continue;
       } else {
       
       const estadosDB = estadosMapping[estadoFrontend] || [estadoFrontend];
@@ -436,6 +436,7 @@ export async function POST(request) {
           cliente_id: true,
           nombre: true,
           estado: true,
+          accion: true, 
           fecha_ultimo_estado: true,
           accion_comercial: {
             select: {

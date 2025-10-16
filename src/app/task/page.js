@@ -32,6 +32,8 @@ export default function TasksPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
   const [currentView, setCurrentView] = useState('cards');
+  const TOP_KEYS = ['Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
+  const BOTTOM_KEYS = ['En seguimiento','Promesa de Pago'];
 
   // Estados para paginación y carga
   const [tasks, setTasks] = useState([]);
@@ -48,8 +50,11 @@ export default function TasksPage() {
 
   // Estados para estadísticas
   const [generalStats, setGeneralStats] = useState({
-    'Codigo no entregado': { total: 0, pendientes: 0, completados: 0 },
-    'duda no resuelta': { total: 0, pendientes: 0, completados: 0 }
+    'Interesado en reactivar': { total: 0, pendientes: 0, completados: 0 },
+    'Fecha de Pago': { total: 0, pendientes: 0, completados: 0 },
+    'Indeciso / Informacion': { total: 0, pendientes: 0, completados: 0 },
+    'En seguimiento': { total: 0, pendientes: 0, completados: 0 },
+    'Promesa de Pago': { total: 0, pendientes: 0, completados: 0 }
   });
    const [mensajesStats, setMensajesStats] = useState({
     enviados: 0
@@ -62,7 +67,7 @@ export default function TasksPage() {
   const loadGeneralStats = async () => {
     setLoadingStats(true);
     try {
-      const response = await fetch('/api/task', {
+      /* const response = await fetch('/api/task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estados: Object.keys(estadosConfig) })
@@ -76,6 +81,26 @@ export default function TasksPage() {
           // Actualizar las estadísticas con los datos recibidos del API
           setGeneralStats(data.metricas || {});
         }
+      } */
+      const [respTop, respBottom] = await Promise.all([
+      fetch('/api/task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estados: TOP_KEYS })
+      }),
+      fetch('/api/task_accion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estados: BOTTOM_KEYS })
+      })
+      ]);
+
+      const dataTop = respTop.ok ? await respTop.json() : { success:false, metricas:{} };
+      const dataBottom = respBottom.ok ? await respBottom.json() : { success:false, metricas:{} };
+
+      if (dataTop.success || dataBottom.success) {
+        const metricas = { ...(dataTop.metricas||{}), ...(dataBottom.metricas||{}) };
+        setGeneralStats(metricas);
       }
     } catch (error) {
       console.error('Error cargando estadísticas:', error);

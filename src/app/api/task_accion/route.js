@@ -273,163 +273,239 @@ export async function GET(request) {
   }
 }
 
-/* // POST - Obtener estadísticas y métricas
+// POST - Obtener estadísticas y métricas
+// export async function POST(request) {
+//   try {
+//     console.log('🚀 Iniciando POST /api/task para métricas');
+    
+//     const body = await request.json();
+//     const { estados = [] } = body;
+    
+//     console.log('📊 Calculando métricas para estados:', estados);
+
+//     // Configurar rango de fechas del mes actual (igual que en GET)
+//     const ahora = new Date();
+//     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+//     const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+//     console.log('📅 Filtros de fecha para métricas:', {
+//       mesActual: ahora.getMonth() + 1,
+//       añoActual: ahora.getFullYear(),
+//       inicioMes: inicioMes.toISOString(),
+//       finMes: finMes.toISOString()
+//     });
+
+//     // Obtener conteos por estado
+//     const metricas = {};
+    
+//     // Si no se especifican estados, calcular para todos los estados configurados
+//     const estadosParaCalcular = estados.length > 0 ? estados : Object.keys(estadosMapping);
+    
+//     for (const estadoFrontend of estadosParaCalcular) {
+//       const estadosDB = estadosMapping[estadoFrontend] || [estadoFrontend];
+      
+//       console.log(`\n🎯 Procesando estado: "${estadoFrontend}" -> ${estadosDB}`);
+      
+//       // ✅ OBTENER TODOS LOS CANDIDATOS (misma lógica que GET)
+//       const clientesCandidatos = await prisma.cliente.findMany({
+//         where: {
+//           estado: { in: estadosDB },
+//           fecha_ultimo_estado: {
+//             gte: inicioMes,
+//             lte: finMes
+//           }
+//         },
+//         select: {
+//           cliente_id: true,
+//           nombre: true,
+//           estado: true,
+//           fecha_ultimo_estado: true,
+//           accion_comercial: {
+//             select: {
+//               fecha_accion: true
+//             },
+//             orderBy: {
+//               fecha_accion: 'desc'
+//             },
+//             take: 1 // Solo la más reciente
+//           }
+//         }
+//       });
+
+//       console.log(`📋 Candidoooooooooooooooooatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
+
+//       // ✅ CLASIFICAR EN PENDIENTES Y COMPLETADAS
+//       let pendientes = 0;
+//       let completadas = 0;
+
+//       clientesCandidatos.forEach(cliente => {
+//         if (!cliente.fecha_ultimo_estado) {
+//           return; // Saltar si no tiene datos válidos
+//         }
+
+//         const fechaUltimoEstado = new Date(cliente.fecha_ultimo_estado);
+        
+//         // Si no tiene acciones comerciales -> PENDIENTE
+//         if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
+//           pendientes++;
+//           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones -> PENDIENTE`);
+//           return;
+//         }
+
+//         const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
+        
+//         // Comparar fechas para clasificar
+//         if (fechaUltimoEstado < fechaUltimaAccion) {
+//           // Estado más reciente que acción -> PENDIENTE
+//           pendientes++;
+//           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Estado más reciente -> PENDIENTE`);
+//         } else {
+//           // Acción más reciente que estado -> COMPLETADA
+//           completadas++;
+//           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Acción más reciente -> COMPLETADA`);
+//         }
+//       });
+
+//       const total = pendientes + completadas;
+      
+//       metricas[estadoFrontend] = {
+//         total,
+//         pendientes,
+//         completados: completadas, // Mantener nombre consistente con frontend
+//         porcentajeCompletado: total > 0 ? Math.round((completadas / total) * 100) : 0
+//       };
+
+//       console.log(`📈 Métricas "${estadoFrontend}":`, {
+//         total,
+//         pendientes,
+//         completadas,
+//         porcentaje: metricas[estadoFrontend].porcentajeCompletado + '%'
+//       });
+//     }
+
+//     // ✅ CALCULAR ESTADÍSTICAS GENERALES
+//     const allStats = Object.values(metricas);
+//     const totalGeneral = allStats.reduce((sum, stat) => sum + stat.total, 0);
+//     const pendientesGeneral = allStats.reduce((sum, stat) => sum + stat.pendientes, 0);
+//     const completadasGeneral = allStats.reduce((sum, stat) => sum + stat.completados, 0);
+    
+//     const estadisticasGenerales = {
+//       total: totalGeneral,
+//       pendientes: pendientesGeneral,
+//       completadas: completadasGeneral,
+//       efectividad: totalGeneral > 0 ? Math.round((completadasGeneral / totalGeneral) * 100) : 0
+//     };
+
+//     const response = {
+//       success: true,
+//       metricas,
+//       estadisticasGenerales,
+//       timestamp: new Date().toISOString(),
+//       debug: {
+//         rangoFechas: {
+//           inicio: inicioMes.toISOString(),
+//           fin: finMes.toISOString()
+//         },
+//         estadosProcesados: estadosParaCalcular
+//       }
+//     };
+
+//     console.log('\n📤 Métricas finales calculadas:');
+//     console.log('📊 Por estado:', metricas);
+//     console.log('📊 Generales:', estadisticasGenerales);
+    
+//     return NextResponse.json(response);
+
+//   } catch (error) {
+//     console.error('❌ Error en POST /api/task:', error?.message || error || 'Error desconocido');
+//     console.error('Stack trace:', error?.stack);
+//     return NextResponse.json(
+//       { 
+//         success: false, 
+//         error: 'Error calculando métricas',
+//         details: error?.message || 'Error desconocido'
+//       }, 
+//       { status: 500 }
+//     );
+//   }
+// }
 export async function POST(request) {
   try {
-    console.log('🚀 Iniciando POST /api/task para métricas');
-    
-    const body = await request.json();
-    const { estados = [] } = body;
-    
-    console.log('📊 Calculando métricas para estados:', estados);
+    const body = await request.json().catch(() => ({}));
+    const { estados = Object.keys(estadosMapping), search = '' } = body;
 
-    // Configurar rango de fechas del mes actual (igual que en GET)
-    const ahora = new Date();
-    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-    const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
-    
-    console.log('📅 Filtros de fecha para métricas:', {
-      mesActual: ahora.getMonth() + 1,
-      añoActual: ahora.getFullYear(),
-      inicioMes: inicioMes.toISOString(),
-      finMes: finMes.toISOString()
-    });
-
-    // Obtener conteos por estado
     const metricas = {};
-    
-    // Si no se especifican estados, calcular para todos los estados configurados
-    const estadosParaCalcular = estados.length > 0 ? estados : Object.keys(estadosMapping);
-    
-    for (const estadoFrontend of estadosParaCalcular) {
+
+    for (const estadoFrontend of estados) {
       const estadosDB = estadosMapping[estadoFrontend] || [estadoFrontend];
-      
-      console.log(`\n🎯 Procesando estado: "${estadoFrontend}" -> ${estadosDB}`);
-      
-      // ✅ OBTENER TODOS LOS CANDIDATOS (misma lógica que GET)
-      const clientesCandidatos = await prisma.cliente.findMany({
-        where: {
-          estado: { in: estadosDB },
-          fecha_ultimo_estado: {
-            gte: inicioMes,
-            lte: finMes
-          }
-        },
+
+     // 1) Filtrar por el atributo del CLIENTE: "accion"
+      const whereAND = [{ accion: { in: estadosDB } }];
+
+      if (search) {
+        andClauses.push({
+          OR: [
+            { nombre: { contains: search, mode: 'insensitive' } },
+            { apellido: { contains: search, mode: 'insensitive' } },
+            { celular: { contains: search, mode: 'insensitive' } },
+            { documento_identidad: { contains: search, mode: 'insensitive' } }  
+          ]
+        });
+      }
+
+      const candidatos = await prisma.cliente.findMany({
+        where: { AND: whereAND },
         select: {
           cliente_id: true,
-          nombre: true,
-          estado: true,
           fecha_ultimo_estado: true,
+          // 2) Traer SIEMPRE la última acción comercial (sin filtrar por estado)
           accion_comercial: {
-            select: {
-              fecha_accion: true
-            },
-            orderBy: {
-              fecha_accion: 'desc'
-            },
-            take: 1 // Solo la más reciente
+            select: { fecha_accion: true },
+            orderBy: { fecha_accion: 'desc' },
+            take: 1
           }
         }
       });
 
-      console.log(`📋 Candidoooooooooooooooooatos para "${estadoFrontend}": ${clientesCandidatos.length}`);
-
-      // ✅ CLASIFICAR EN PENDIENTES Y COMPLETADAS
       let pendientes = 0;
-      let completadas = 0;
+      let completados = 0;
 
-      clientesCandidatos.forEach(cliente => {
-        if (!cliente.fecha_ultimo_estado) {
-          return; // Saltar si no tiene datos válidos
-        }
+      for (const c of candidatos) {
+        const ultima = c.accion_comercial[0];
+        if (!ultima) continue; // por seguridad
 
-        const fechaUltimoEstado = new Date(cliente.fecha_ultimo_estado);
-        
-        // Si no tiene acciones comerciales -> PENDIENTE
-        if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
-          pendientes++;
-          console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones -> PENDIENTE`);
-          return;
-        }
+        const fAcc = new Date(ultima.fecha_accion);
+        const fEstado = c.fecha_ultimo_estado ? new Date(c.fecha_ultimo_estado) : null;
 
-        const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
-        
-        // Comparar fechas para clasificar
-        if (fechaUltimoEstado < fechaUltimaAccion) {
-          // Estado más reciente que acción -> PENDIENTE
-          pendientes++;
-          console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Estado más reciente -> PENDIENTE`);
-        } else {
-          // Acción más reciente que estado -> COMPLETADA
-          completadas++;
-          console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Acción más reciente -> COMPLETADA`);
-        }
-      });
+        // Igual que GET:
+        // Pendiente: no hay fecha_ultimo_estado o la acción es más nueva
+        if (!fEstado || fAcc > fEstado) pendientes++;
+        else completados++;
+      }
 
-      const total = pendientes + completadas;
-      
+      const total = pendientes + completados;
+
       metricas[estadoFrontend] = {
         total,
-        pendientes,
-        completados: completadas, // Mantener nombre consistente con frontend
-        porcentajeCompletado: total > 0 ? Math.round((completadas / total) * 100) : 0
+        pendientes,          // 👈 esto coincide con la cantidad del GET
+        completados,
+        porcentajeCompletado: total > 0 ? Math.round((completados / total) * 100) : 0
       };
-
-      console.log(`📈 Métricas "${estadoFrontend}":`, {
-        total,
-        pendientes,
-        completadas,
-        porcentaje: metricas[estadoFrontend].porcentajeCompletado + '%'
-      });
     }
 
-    // ✅ CALCULAR ESTADÍSTICAS GENERALES
-    const allStats = Object.values(metricas);
-    const totalGeneral = allStats.reduce((sum, stat) => sum + stat.total, 0);
-    const pendientesGeneral = allStats.reduce((sum, stat) => sum + stat.pendientes, 0);
-    const completadasGeneral = allStats.reduce((sum, stat) => sum + stat.completados, 0);
-    
-    const estadisticasGenerales = {
-      total: totalGeneral,
-      pendientes: pendientesGeneral,
-      completadas: completadasGeneral,
-      efectividad: totalGeneral > 0 ? Math.round((completadasGeneral / totalGeneral) * 100) : 0
-    };
-
-    const response = {
+    return NextResponse.json({
       success: true,
       metricas,
-      estadisticasGenerales,
-      timestamp: new Date().toISOString(),
-      debug: {
-        rangoFechas: {
-          inicio: inicioMes.toISOString(),
-          fin: finMes.toISOString()
-        },
-        estadosProcesados: estadosParaCalcular
-      }
-    };
-
-    console.log('\n📤 Métricas finales calculadas:');
-    console.log('📊 Por estado:', metricas);
-    console.log('📊 Generales:', estadisticasGenerales);
-    
-    return NextResponse.json(response);
-
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('❌ Error en POST /api/task:', error?.message || error || 'Error desconocido');
-    console.error('Stack trace:', error?.stack);
+    console.error('❌ Error en POST /api/task_accion:', error?.message || error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error calculando métricas',
-        details: error?.message || 'Error desconocido'
-      }, 
+      { success: false, error: 'Error calculando métricas' },
       { status: 500 }
     );
   }
-} */
-
+}
 // PUT - Obtener estadísticas de mensajes enviados (acciones comerciales "Código entregado especial retadora")
 export async function PUT(request) {
   try {

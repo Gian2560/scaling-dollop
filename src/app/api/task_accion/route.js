@@ -6,16 +6,20 @@ const prisma = new PrismaClient();
 // Mapeo de estados del frontend a estados exactos de la base de datos
 const estadosMapping = {
   'En seguimiento': ['En seguimiento'],
-  'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
+  'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago'],
+  'Volver a contactar': ['Volver a contactar']
 };
 
 // GET - Obtener clientes filtrados por estado
 export async function GET(request) {
   try {
-    console.log('🚀 Iniciando GET /api/task');
+    console.log('🚀 Iniciando GET /api/task_accion');
     
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
+    const estadosFrontend = estado
+      ? estado.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
     const page = parseInt(searchParams.get('page') || '0');
     const limit = parseInt(searchParams.get('limit') || '25');
     const search = searchParams.get('search') || '';
@@ -35,8 +39,9 @@ export async function GET(request) {
 
     // ✅ PRIMERO: Verificar si hay clientes con ese estado
     let estadosDB = [];
-    if (estado) {
-      estadosDB = estadosMapping[estado] || [estado];
+    if (estadosFrontend.length) {
+      //estadosDB = estadosMapping[estado] || [estado];
+      estadosDB = Array.from(new Set(estadosFrontend.flatMap(e => estadosMapping[e] || [e])));
       console.log('🎯 Estados a buscar:', estadosDB);
       
       const clientesConEstado = await prisma.cliente.count({
@@ -60,7 +65,7 @@ export async function GET(request) {
     let whereClause = {};
 
     // Filtrar por estado del cliente si se especifica
-    if (estado) {
+    if (estadosDB.length) {
       whereClause.accion = { in: estadosDB };
     }
 
@@ -152,23 +157,10 @@ export async function GET(request) {
       orderBy: { fecha_creacion: 'desc' }
     });
 
-    const clientesOrdenados = clientesCandidatos.sort((a, b) => {
-    const fechaA = a.accion_comercial?.[0]?.fecha_accion 
-      ? new Date(a.accion_comercial[0].fecha_accion) 
-      : new Date(0); // Fecha muy antigua si no tiene acciones
-      
-    const fechaB = b.accion_comercial?.[0]?.fecha_accion 
-      ? new Date(b.accion_comercial[0].fecha_accion) 
-      : new Date(0);
-    
-    // Más reciente primero (descendente)
-    return fechaB - fechaA;
-    });
-
     console.log(`🔍 Clientes candidatos encontrados: ${clientesCandidatos.length}`);
 
     // ✅ QUINTO: Filtrar clientes donde fecha_ultimo_estado > fecha_accion más reciente
-    const clientesFiltrados = clientesOrdenados.filter(cliente => {
+    const clientesFiltrados = clientesCandidatos.filter(cliente => {
       if (!cliente.fecha_ultimo_estado) {
         console.log(`⚠️ Cliente ${cliente.cliente_id} sin fecha_ultimo_estado`);
         return false;
@@ -273,7 +265,7 @@ export async function GET(request) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error en GET /api/task:', error?.message || error || 'Error desconocido');
+    console.error('❌ Error en GET /api/task_accion:', error?.message || error || 'Error desconocido');
     console.error('Stack trace:', error?.stack);
     return NextResponse.json(
       { 

@@ -135,6 +135,9 @@ export default function TasksPage() {
 
     setLoading(true);
     try {
+      const estadosToRequest = estado === 'En seguimiento'
+      ? ['En seguimiento', 'Volver a contactar']
+      : [estado];
       const params = new URLSearchParams({
         estado,
         page: currentPage.toString(),
@@ -144,7 +147,7 @@ export default function TasksPage() {
 
       console.log('🔍 Cargando tareas con parámetros:', { estado, currentPage, limit, search });
       let response;
-      if(estado === "En seguimiento" || estado === "Promesa de Pago"){
+      if(estadosToRequest.some(s => ['En seguimiento','Volver a contactar','Promesa de Pago'].includes(s))){
         response = await fetch(`/api/task_accion?${params}`);
       }
       else {

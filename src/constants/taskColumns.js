@@ -14,7 +14,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import { estadosConfig } from './estadosConfig';
 
 // Columnas base (siempre presentes)
-const baseColumns = (onAccionComercial, onVerConversacion) => [
+const baseColumns = (onAccionComercial, onVerConversacion, selectedEstado = null) => [
   {
     field: 'cliente',
     headerName: 'Cliente',
@@ -81,14 +81,28 @@ const baseColumns = (onAccionComercial, onVerConversacion) => [
   },
   {
     field: 'fechaCreacion',
-    headerName: 'Fecha Creación',
+    headerName: selectedEstado === 'En seguimiento' || selectedEstado === 'Promesa de Pago' 
+      ? 'Última Gestión' 
+      : 'Fecha Creación',
     minWidth: 120,
     flex: 1,
-    renderCell: (value) => (
-      <Typography variant="body2">
-        {value}
-      </Typography>
-    )
+    renderCell: (value, row) => {
+      // ✅ Para "En seguimiento" y "Promesa de Pago", mostrar fecha de acción comercial si existe
+      const estadosEspeciales = ['En seguimiento', 'Promesa de Pago'];
+      const esEstadoEspecial = estadosEspeciales.includes(selectedEstado);
+      
+      let fechaAMostrar = value; // Default: fechaCreacion del backend
+      
+      if (esEstadoEspecial && row.ultimaAccionComercial?.fechaUltimaAccion) {
+        fechaAMostrar = row.ultimaAccionComercial.fechaUltimaAccion;
+      }
+      
+      return (
+        <Typography variant="body2">
+          {fechaAMostrar}
+        </Typography>
+      );
+    }
   },
   {
     field: 'llamado',
@@ -196,7 +210,7 @@ const actionColumns = (onAccionComercial, onVerConversacion) => [
 // Función principal que devuelve las columnas según el estado
 export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado = null) => {
   // Columnas base
-  let columns = [...baseColumns(onAccionComercial, onVerConversacion)];
+  let columns = [...baseColumns(onAccionComercial, onVerConversacion, selectedEstado)];
   
   // Agregar columnas específicas del estado si existen
   if (selectedEstado && estadoSpecificColumns[selectedEstado]) {

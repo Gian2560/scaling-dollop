@@ -65,7 +65,7 @@ export async function PUT(req, context) {
 
     // 📌 Si hay una acción comercial, registrar en `accion_comercial`
     if (accion) {
-      await prisma.accion_comercial.create({
+      const nuevaAccionComercial = await prisma.accion_comercial.create({
         data: {
           cliente_id: parseInt(id),
           persona_id: gestor ? await obtenerPersonaIdPorNombre(gestor) : null,
@@ -75,6 +75,18 @@ export async function PUT(req, context) {
           gestor: gestor,
         },
       });
+
+      // ✅ CREAR HISTÓRICO DE OBSERVACIÓN
+      if (observaciones) {
+        await prisma.historico_observacion.create({
+          data: {
+            cliente_id: parseInt(id),
+            accion_comercial_id: nuevaAccionComercial.accion_comercial_id,
+            observacion: observaciones,
+            fecha_creacion: new Date(),
+          },
+        });
+      }
     }
 
     // 📌 Si el estado es "Promesa de Pago", registrar la fecha en `cita`

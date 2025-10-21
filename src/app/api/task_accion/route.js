@@ -65,10 +65,10 @@ export async function GET(request) {
     }
 
     // Y debe tener fecha_ultimo_estado del mes actual
-    /*whereClause.fecha_ultimo_estado = {
+    whereClause.fecha_ultimo_estado = {
       gte: inicioMes,
       lte: finMes
-    };*/
+    };
 
     // Filtrar por búsqueda si se especifica
     if (search) {

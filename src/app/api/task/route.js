@@ -29,8 +29,8 @@ export async function GET(request) {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
     const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
-    const esAccionComercial = Object.keys(estadosAccionComercial).includes(estado);
-    let clientesFiltrados = []; // <--- DECLARAR AQUÍ
+  const esAccionComercial = Object.keys(estadosAccionComercial).includes(estado);
+  let clientesFiltrados = []; // <--- DECLARAR AQUÍ
     console.log('🔧 Filtros iniciales:', { estado });
 
     console.log('📅 Filtros de fecha:', {
@@ -55,23 +55,25 @@ export async function GET(request) {
         fecha_creacion: true,
         fecha_ultimo_estado: true,
         score: true,
-        accion_comercial: {
-          select: {
-            estado: true,
-            fecha_accion: true
-          },
-          orderBy: { fecha_accion: 'desc' },
-          take: 1
-        }
+          // Solo traer la última acción COMERCIAL del mes actual
+          accion_comercial: {
+            where: { fecha_accion: { gte: inicioMes, lte: finMes }, estado: { in: estadosAccionComercial[estado] || [estado] } },
+            select: {
+              estado: true,
+              fecha_accion: true
+            },
+            orderBy: { fecha_accion: 'desc' },
+            take: 1
+          }
       },
       orderBy: { fecha_creacion: 'desc' }
     });
 
     clientesFiltrados = clientesCandidatos.filter(cliente => {
-      const ultimaAccion = cliente.accion_comercial[0];
+      const ultimaAccion = cliente.accion_comercial && cliente.accion_comercial[0];
+      // Incluir solo si existe una acción comercial del mes actual y coincide con el estado buscado
+      if (!ultimaAccion) return false;
       return (
-        ultimaAccion &&
-        estadosAccionComercial.includes(ultimaAccion.estado) &&
         ultimaAccion.estado === estado &&
         (!cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
       );
@@ -109,10 +111,10 @@ export async function GET(request) {
     }
 
     // Y debe tener fecha_ultimo_estado del mes actual
-    /*whereClause.fecha_ultimo_estado = {
+    whereClause.fecha_ultimo_estado = {
       gte: inicioMes,
       lte: finMes
-    };*/
+    };
 
     // Filtrar por búsqueda si se especifica
     if (search) {
@@ -439,14 +441,18 @@ export async function POST(request) {
           accion: true, 
           fecha_ultimo_estado: true,
           accion_comercial: {
-            select: {
-              fecha_accion: true
-            },
-            orderBy: {
-              fecha_accion: 'desc'
-            },
-            take: 1 // Solo la más reciente
-          }
+              where: {
+                estado: { in: estadosDB },
+                fecha_accion: { gte: inicioMes, lte: finMes } // ✅ última acción de este mes
+              },
+              select: {
+                fecha_accion: true
+              },
+              orderBy: {
+                fecha_accion: 'desc'
+              },
+              take: 1 // Solo la más reciente
+            }
         }
       });
 

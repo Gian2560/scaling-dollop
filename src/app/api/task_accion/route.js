@@ -152,10 +152,23 @@ export async function GET(request) {
       orderBy: { fecha_creacion: 'desc' }
     });
 
+    const clientesOrdenados = clientesCandidatos.sort((a, b) => {
+    const fechaA = a.accion_comercial?.[0]?.fecha_accion 
+      ? new Date(a.accion_comercial[0].fecha_accion) 
+      : new Date(0); // Fecha muy antigua si no tiene acciones
+      
+    const fechaB = b.accion_comercial?.[0]?.fecha_accion 
+      ? new Date(b.accion_comercial[0].fecha_accion) 
+      : new Date(0);
+    
+    // Más reciente primero (descendente)
+    return fechaB - fechaA;
+    });
+
     console.log(`🔍 Clientes candidatos encontrados: ${clientesCandidatos.length}`);
 
     // ✅ QUINTO: Filtrar clientes donde fecha_ultimo_estado > fecha_accion más reciente
-    const clientesFiltrados = clientesCandidatos.filter(cliente => {
+    const clientesFiltrados = clientesOrdenados.filter(cliente => {
       if (!cliente.fecha_ultimo_estado) {
         console.log(`⚠️ Cliente ${cliente.cliente_id} sin fecha_ultimo_estado`);
         return false;

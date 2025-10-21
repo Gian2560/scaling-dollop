@@ -11,6 +11,7 @@ import CallIcon from '@mui/icons-material/Call';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChatIcon from '@mui/icons-material/Chat';
 import PaymentIcon from '@mui/icons-material/Payment';
+import HistoryIcon from '@mui/icons-material/History';
 import { estadosConfig } from './estadosConfig';
 
 // Columnas base (siempre presentes)
@@ -167,11 +168,11 @@ const estadoSpecificColumns = {
 };
 
 // Columnas de acciones (siempre al final)
-const actionColumns = (onAccionComercial, onVerConversacion) => [
+const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico) => [
   {
     field: 'acciones',
     headerName: 'Acciones',
-    minWidth: 120,
+    minWidth: 160,
     flex: 0,
     sortable: false,
     renderCell: (value, row) => (
@@ -183,6 +184,15 @@ const actionColumns = (onAccionComercial, onVerConversacion) => [
             sx={{ color: '#007391' }}
           >
             <ChatIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Ver histórico">
+          <IconButton
+            size="small"
+            onClick={() => onVerHistorico(row.id)}
+            sx={{ color: '#6b46c1' }}
+          >
+            <HistoryIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title={row.llamado ? "Completado" : "Realizar llamada"}>
@@ -208,7 +218,7 @@ const actionColumns = (onAccionComercial, onVerConversacion) => [
 ];
 
 // Función principal que devuelve las columnas según el estado
-export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado = null) => {
+export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado = null, onVerHistorico) => {
   // Columnas base
   let columns = [...baseColumns(onAccionComercial, onVerConversacion, selectedEstado)];
   
@@ -219,7 +229,7 @@ export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado
   }
   
   // Agregar columnas de acciones al final
-  columns = [...columns, ...actionColumns(onAccionComercial, onVerConversacion)];
+  columns = [...columns, ...actionColumns(onAccionComercial, onVerConversacion, onVerHistorico)];
   
   return columns;
 };

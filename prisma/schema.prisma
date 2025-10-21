@@ -8,19 +8,20 @@ datasource db {
 }
 
 model accion_comercial {
-  accion_comercial_id Int       @id @default(autoincrement())
-  cliente_id          Int?
-  cita_id             Int?
-  pago_id             Int?
-  persona_id          Int?
-  estado              String?   @db.VarChar(25)
-  fecha_accion        DateTime? @default(now()) @db.Timestamp(6)
-  nota                String
-  gestor              String?   @db.VarChar(255)
-  cliente             cliente?  @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "accion_comercial_ibfk_1")
-  cita                cita?     @relation(fields: [cita_id], references: [cita_id], onUpdate: NoAction, map: "accion_comercial_ibfk_2")
-  pago                pago?     @relation(fields: [pago_id], references: [pago_id], onUpdate: NoAction, map: "accion_comercial_ibfk_3")
-  persona             persona?  @relation(fields: [persona_id], references: [persona_id], onUpdate: NoAction, map: "accion_comercial_ibfk_4")
+  accion_comercial_id   Int                     @id @default(autoincrement())
+  cliente_id            Int?
+  cita_id               Int?
+  pago_id               Int?
+  persona_id            Int?
+  estado                String?                 @db.VarChar(25)
+  fecha_accion          DateTime?               @default(now()) @db.Timestamp(6)
+  nota                  String
+  gestor                String?                 @db.VarChar(255)
+  cliente               cliente?                @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "accion_comercial_ibfk_1")
+  cita                  cita?                   @relation(fields: [cita_id], references: [cita_id], onUpdate: NoAction, map: "accion_comercial_ibfk_2")
+  pago                  pago?                   @relation(fields: [pago_id], references: [pago_id], onUpdate: NoAction, map: "accion_comercial_ibfk_3")
+  persona               persona?                @relation(fields: [persona_id], references: [persona_id], onUpdate: NoAction, map: "accion_comercial_ibfk_4")
+  historico_observacion historico_observacion[]
 }
 
 model campanha {
@@ -56,27 +57,27 @@ model cita {
 }
 
 model cliente {
-  cliente_id                   Int                @id @default(autoincrement())
-  documento_identidad          String?            @db.VarChar(12)
-  tipo_documento               String?            @db.VarChar(20)
-  nombre                       String             @db.VarChar(100)
-  apellido                     String?            @db.VarChar(100)
-  celular                      String             @db.VarChar(20)
-  email                        String?            @db.VarChar(100)
-  fecha_creacion               DateTime?          @default(now()) @db.Timestamp(6)
-  fecha_ultima_interaccion     DateTime?          @db.Timestamp(6)
-  fecha_ultima_interaccion_bot DateTime?          @db.Timestamp(6)
-  estado                       String?            @default("en seguimiento")
-  motivo                       String?            @default("desconocido")
-  categoria_no_interes         String?            @db.VarChar(20)
-  detalle_no_interes           String?            @db.VarChar(100)
+  cliente_id                   Int                     @id @default(autoincrement())
+  documento_identidad          String?                 @db.VarChar(12)
+  tipo_documento               String?                 @db.VarChar(20)
+  nombre                       String                  @db.VarChar(100)
+  apellido                     String?                 @db.VarChar(100)
+  celular                      String                  @db.VarChar(20)
+  email                        String?                 @db.VarChar(100)
+  fecha_creacion               DateTime?               @default(now()) @db.Timestamp(6)
+  fecha_ultima_interaccion     DateTime?               @db.Timestamp(6)
+  fecha_ultima_interaccion_bot DateTime?               @db.Timestamp(6)
+  estado                       String?                 @default("en seguimiento")
+  motivo                       String?                 @default("desconocido")
+  categoria_no_interes         String?                 @db.VarChar(20)
+  detalle_no_interes           String?                 @db.VarChar(100)
   bound                        Boolean?
   observacion                  String?
-  gestor                       String?            @default("") @db.VarChar(100)
-  accion                       String?            @default("") @db.VarChar(50)
-  in_out                       Boolean?           @default(false)
-  score                        String             @default("no_score") @db.VarChar(20)
-  fecha_ultimo_estado          DateTime?          @db.Timestamp(6)
+  gestor                       String?                 @default("") @db.VarChar(100)
+  accion                       String?                 @default("") @db.VarChar(50)
+  in_out                       Boolean?                @default(false)
+  score                        String                  @default("no_score") @db.VarChar(20)
+  fecha_ultimo_estado          DateTime?               @db.Timestamp(6)
   Segmento                     String?
   Codigo_Asociado              String?
   Zona                         String?
@@ -89,6 +90,7 @@ model cliente {
   conversacion                 conversacion[]
   historico_estado             historico_estado[]
   historico_motivo             historico_motivo[]
+  historico_observacion        historico_observacion[]
   historico_score              historico_score[]
   leadh                        leadh[]
   pago                         pago[]
@@ -270,4 +272,14 @@ model mensaje_status_event {
 
   @@index([estado], map: "idx_mse_estado")
   @@index([id_msg, created_at(sort: Desc)], map: "idx_mse_idmsg_created")
+}
+
+model historico_observacion {
+  historico_observacion_id Int               @id @default(autoincrement())
+  cliente_id               Int
+  accion_comercial_id      Int?
+  observacion              String
+  fecha_creacion           DateTime?         @default(now()) @db.Timestamptz(6)
+  accion_comercial         accion_comercial? @relation(fields: [accion_comercial_id], references: [accion_comercial_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_historico_accion_comercial")
+  cliente                  cliente           @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_historico_cliente")
 }

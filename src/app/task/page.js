@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useClientes } from '@/hooks/useClientes';
 import ActionComercialModal from '@/app/components/ActionComercialModal';
 import ConversationModal from '@/app/components/ConversationModal';
+import HistoricoModal from '@/app/components/HistoricoModal';
 import { fetchConversacion } from '../../../services/clientesService';
 import ProfessionalHeader from '../components/taskComponets/ProfessionalHeader';
 import EstadoCard from '../components/taskComponets/EstadoCard';
@@ -26,9 +27,11 @@ export default function TasksPage() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [openConversationModal, setOpenConversationModal] = useState(false);
+  const [openHistoricoModal, setOpenHistoricoModal] = useState(false);
   const [conversationData, setConversationData] = useState(null);
   const [conversationLoading, setConversationLoading] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(0);
+  const [selectedClienteHistorico, setSelectedClienteHistorico] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
   const [currentView, setCurrentView] = useState('cards');
@@ -252,6 +255,23 @@ export default function TasksPage() {
     setSelectedConversation(0);
   };
 
+  // Función para ver histórico
+  const handleVerHistorico = async (clienteId) => {
+    // Buscar el cliente en los datos actuales para obtener su nombre
+    const cliente = tasks.find(t => t.id === clienteId);
+    setSelectedClienteHistorico({
+      id: clienteId,
+      nombre: cliente?.cliente || 'Cliente desconocido'
+    });
+    setOpenHistoricoModal(true);
+  };
+
+  // Función para cerrar modal de histórico
+  const handleCloseHistorico = () => {
+    setOpenHistoricoModal(false);
+    setSelectedClienteHistorico(null);
+  };
+
   // Función personalizada para guardar cliente y marcar tarea como llamada
   const handleSaveClienteAndMarkTask = async (clienteData) => {
     try {
@@ -457,7 +477,7 @@ export default function TasksPage() {
             </Box>
           ) : (
             <TasksTable
-              columns={taskColumns(handleAccionComercial, handleVerConversacion,selectedEstado)}
+              columns={taskColumns(handleAccionComercial, handleVerConversacion, selectedEstado, handleVerHistorico)}
               data={tasks}
               pagination={pagination}
               onChangePage={handleChangePage}
@@ -485,6 +505,13 @@ export default function TasksPage() {
         conversationData={conversationData}
         selectedConversation={selectedConversation}
         setSelectedConversation={setSelectedConversation}
+      />
+
+      <HistoricoModal
+        open={openHistoricoModal}
+        onClose={handleCloseHistorico}
+        clienteId={selectedClienteHistorico?.id}
+        clienteNombre={selectedClienteHistorico?.nombre}
       />
     </Container>
   );

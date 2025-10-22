@@ -14,15 +14,52 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import HistoryIcon from '@mui/icons-material/History';
 import { estadosConfig } from './estadosConfig';
 // Estados que deben mostrar "gestionado mes actual" si tienen acción en el mes
-const HIGHLIGHT_STATES = ['Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
+const HIGHLIGHT_STATES = ['En seguimiento','Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
 
 // Helper para decidir si marcar/colorear la fila/celda
 export function isGestionadoMesActual(row, selectedEstado) {
   if (!selectedEstado) return false;
   if (!HIGHLIGHT_STATES.includes(selectedEstado)) return false;
-  // El backend ya incluye `ultimaAccionComercial` (fecha) solo cuando existe acción en el mes actual.
-  // Aquí usamos la presencia como indicador. Si necesitas parsing de fecha, podemos agregarlo.
-  return !!row?.ultimaAccionComercial?.fechaUltimaAccion;
+
+  const fechaStr = row?.ultimaAccionComercial?.fechaUltimaAccion;
+  if (!fechaStr) return false;
+
+  // Try to parse several common formats robustly
+  function parseDateSmart(s) {
+    if (!s) return null;
+    if (s instanceof Date) return s;
+    // If ISO-like
+    if (typeof s === 'string' && s.includes('T')) {
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+    // Common localized formats like dd/mm/yyyy or mm/dd/yyyy
+    if (typeof s === 'string' && /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(s)) {
+      const parts = s.split('/').map(p => parseInt(p, 10));
+      if (parts.length === 3) {
+        let [p1, p2, p3] = parts; // ambiguous
+        // if p1 > 12 assume dd/mm/yyyy
+        if (p1 > 12) {
+          return new Date(p3, p2 - 1, p1);
+        }
+        // if p2 > 12 assume mm/dd/yyyy (rare for es-ES)
+        if (p2 > 12) {
+          return new Date(p3, p1 - 1, p2);
+        }
+        // default to dd/mm/yyyy (es-ES)
+        return new Date(p3, p2 - 1, p1);
+      }
+    }
+    // Fallback to Date constructor
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+
+  const parsed = parseDateSmart(fechaStr);
+  if (!parsed) return false;
+
+  const ahora = new Date();
+  return parsed.getFullYear() === ahora.getFullYear() && parsed.getMonth() === ahora.getMonth();
 }
 // Columnas base (siempre presentes)
 const baseColumns = (onAccionComercial, onVerConversacion, selectedEstado = null) => [

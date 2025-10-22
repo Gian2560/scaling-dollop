@@ -14,7 +14,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import HistoryIcon from '@mui/icons-material/History';
 import { estadosConfig } from './estadosConfig';
 // Estados que deben mostrar "gestionado mes actual" si tienen acción en el mes
-const HIGHLIGHT_STATES = ['En seguimiento','Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
+const HIGHLIGHT_STATES = ['Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
 
 // Helper para decidir si marcar/colorear la fila/celda
 export function isGestionadoMesActual(row, selectedEstado) {

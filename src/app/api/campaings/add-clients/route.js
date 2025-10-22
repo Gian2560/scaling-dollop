@@ -64,7 +64,7 @@ export async function POST(req, context) {
     
     // OPTIMIZACIÓN 1: Preparar todos los números de teléfono de una vez
     const telefonos = clients.map(client => {
-      const telefono = client.telefono;
+      const telefono = client.celular;
       return telefono ? "+51" + telefono.toString().replace(/\s+/g, "") : null;
     }).filter(Boolean);
     
@@ -131,10 +131,10 @@ export async function POST(req, context) {
             await prisma.cliente.update({
               where: { cliente_id: cliente.cliente_id },
               data: {
-                Segmento: payload.Segmento,
-                Zona: payload.Zona,
-                gestor: payload.gestor,
-                Producto: payload.Producto,
+                Segmento: finalSegmento,
+                Zona: finalZona,
+                gestor: finalGestor,
+                Producto: finalProducto,
               }
             });
           } else {

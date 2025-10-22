@@ -10,7 +10,7 @@ const estadosMapping = {
   'Indeciso / Informacion': ['Indeciso / Informacion', 'Indeciso', 'Información', 'Indeciso/Información'],
 };
 const estadosAccionComercial = {
-  'En seguimiento': ['En seguimiento'],
+  'En seguimiento': ['En seguimiento', 'Volver a contactar'],
   'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
 };
 // GET - Obtener clientes filtrados por estado
@@ -43,41 +43,41 @@ export async function GET(request) {
     if (esAccionComercial) {
       console.log(`\n🔍 Filtrando por acción comercial con estado: "${estado}"`);
     // Buscar clientes cuya acción comercial más reciente sea de ese estado y más reciente que el estado del cliente
-    const clientesCandidatos = await prisma.cliente.findMany({
-      select: {
-        cliente_id: true,
-        nombre: true,
-        apellido: true,
-        celular: true,
-        documento_identidad: true,
-        estado: true,
-        gestor: true,
-        fecha_creacion: true,
-        fecha_ultimo_estado: true,
-        score: true,
-          // Solo traer la última acción COMERCIAL del mes actual
-          accion_comercial: {
-            where: { fecha_accion: { gte: inicioMes, lte: finMes }, estado: { in: estadosAccionComercial[estado] || [estado] } },
-            select: {
-              estado: true,
-              fecha_accion: true
-            },
-            orderBy: { fecha_accion: 'desc' },
-            take: 1
-          }
-      },
-      orderBy: { fecha_creacion: 'desc' }
-    });
+      const clientesCandidatos = await prisma.cliente.findMany({
+        select: {
+          cliente_id: true,
+          nombre: true,
+          apellido: true,
+          celular: true,
+          documento_identidad: true,
+          estado: true,
+          gestor: true,
+          fecha_creacion: true,
+          fecha_ultimo_estado: true,
+          score: true,
+            // Solo traer la última acción COMERCIAL del mes actual
+            accion_comercial: {
+              where: { fecha_accion: { gte: inicioMes, lte: finMes }, estado: { in: estadosAccionComercial[estado] || [estado] } },
+              select: {
+                estado: true,
+                fecha_accion: true
+              },
+              orderBy: { fecha_accion: 'desc' },
+              take: 1
+            }
+        },
+        orderBy: { fecha_creacion: 'desc' }
+      });
 
-    clientesFiltrados = clientesCandidatos.filter(cliente => {
-      const ultimaAccion = cliente.accion_comercial && cliente.accion_comercial[0];
-      // Incluir solo si existe una acción comercial del mes actual y coincide con el estado buscado
-      if (!ultimaAccion) return false;
-      return (
-        ultimaAccion.estado === estado &&
-        (!cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
-      );
-    });
+      clientesFiltrados = clientesCandidatos.filter(cliente => {
+        const ultimaAccion = cliente.accion_comercial && cliente.accion_comercial[0];
+        // Incluir solo si existe una acción comercial del mes actual y coincide con el estado buscado
+        if (!ultimaAccion) return false;
+        return (
+          ultimaAccion.estado === estado &&
+          (!cliente.fecha_ultimo_estado || new Date(ultimaAccion.fecha_accion) > new Date(cliente.fecha_ultimo_estado))
+        );
+      });
 
   } else {    
     let estadosDB = [];
@@ -228,6 +228,15 @@ export async function GET(request) {
 
     console.log(`🎯 Clientes finales después de filtro de acción comercial: ${clientesFiltrados.length}`);
   }
+  // Si estamos en "En seguimiento" (o cualquier estado basado en acciones),
+    // ordenar por la fecha de la última acción comercial (más reciente primero)
+    if (estado === 'En seguimiento') {
+      clientesFiltrados.sort((a, b) => {
+        const fa = a.accion_comercial?.[0]?.fecha_accion ? new Date(a.accion_comercial[0].fecha_accion).getTime() : 0;
+        const fb = b.accion_comercial?.[0]?.fecha_accion ? new Date(b.accion_comercial[0].fecha_accion).getTime() : 0;
+        return fb - fa; // descendente: más reciente primero
+      });
+    }
     // Aplicar paginación a los clientes filtrados
     const totalClientesFiltrados = clientesFiltrados.length;
     const clientesPaginados = clientesFiltrados.slice(page * limit, (page + 1) * limit);

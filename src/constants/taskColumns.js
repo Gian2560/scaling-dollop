@@ -87,6 +87,17 @@ const baseColumns = (onAccionComercial, onVerConversacion, selectedEstado = null
       : 'Fecha Creación',
     minWidth: 120,
     flex: 1,
+    // permitir orden por timestamp (usado por DataGrid u otras tablas que lean valueGetter)
+    sortable: true,
+    valueGetter: (params) => {
+     // si es estado especial, priorizamos la fecha de la última acción comercial
+     const estadosEspeciales = ['En seguimiento', 'Promesa de Pago'];
+    if (estadosEspeciales.includes(selectedEstado) && params.row.ultimaAccionComercial?.fechaUltimaAccion) {
+       return new Date(params.row.ultimaAccionComercial.fechaUltimaAccion).getTime();
+     }
+     // fallback a fecha de creación si existe
+     return params.row.fecha_creacion ? new Date(params.row.fecha_creacion).getTime() : null;
+   },
     renderCell: (value, row) => {
       // ✅ Para "En seguimiento" y "Promesa de Pago", mostrar fecha de acción comercial si existe
       const estadosEspeciales = ['En seguimiento', 'Promesa de Pago'];

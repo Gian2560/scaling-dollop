@@ -5,9 +5,9 @@ const prisma = new PrismaClient();
 
 // Mapeo de estados del frontend a estados exactos de la base de datos
 const estadosMapping = {
-  'En seguimiento': ['En seguimiento'],
-  'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago'],
-  'Volver a contactar': ['Volver a contactar']
+  'En seguimiento': ['En seguimiento','Volver a contactar'],
+  'Promesa de Pago': ['Promesa de Pago', 'Promesa de pago', 'Promesa pago']
+  //'Volver a contactar': ['Volver a contactar']
 };
 
 // GET - Obtener clientes filtrados por estado
@@ -186,7 +186,17 @@ export async function GET(request) {
     });
 
     console.log(`🎯 Clientes finales después de filtro de acción comercial: ${clientesFiltrados.length}`);
-
+// --- INSERTAR ORDENAMIENTO POR fecha_accion ANTES DE PAGINAR ---
+    // Si se está consultando "En seguimiento", ordenar por fecha de la última acción comercial (desc)
+    const shouldSortByAccion = estadosFrontend.includes('En seguimiento') || estadosDB.includes('En seguimiento');
+    if (shouldSortByAccion) {
+      clientesFiltrados.sort((a, b) => {
+        const ta = a.accion_comercial?.[0]?.fecha_accion ? new Date(a.accion_comercial[0].fecha_accion).getTime() : 0;
+        const tb = b.accion_comercial?.[0]?.fecha_accion ? new Date(b.accion_comercial[0].fecha_accion).getTime() : 0;
+        return tb - ta; // descendente: más reciente primero
+      });
+      console.log('🔽 Clientes ordenados por fecha_accion (desc) para En seguimiento');
+    }
     // Aplicar paginación a los clientes filtrados
     const totalClientesFiltrados = clientesFiltrados.length;
     const clientesPaginados = clientesFiltrados.slice(page * limit, (page + 1) * limit);

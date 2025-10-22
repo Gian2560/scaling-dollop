@@ -1,4 +1,5 @@
 import React from 'react';
+import { isGestionadoMesActual } from '../../../constants/taskColumns';
 import {
   Table,
   TableBody,
@@ -17,7 +18,8 @@ export default function TasksTable({
   onChangePage, 
   onChangeRowsPerPage, 
   page, 
-  rowsPerPage 
+  rowsPerPage,
+  selectedEstado
 }) {
   return (
     <Paper elevation={2} sx={{ borderRadius: 3, overflow: 'hidden' }}>
@@ -40,24 +42,31 @@ export default function TasksTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row, index) => (
-              <TableRow key={row.id || index} hover>
-                {columns.map((column) => (
-                  <TableCell 
-                    key={`${row.id || index}-${column.field}`}
-                    sx={{ 
-                      minWidth: column.minWidth || 'auto',
-                      flex: column.flex || 'none'
-                    }}
-                  >
-                    {column.renderCell 
-                      ? column.renderCell(row[column.field], row, index)
-                      : row[column.field]
-                    }
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {data.map((row, index) => {
+              const highlight = isGestionadoMesActual(row, selectedEstado);
+              return (
+                <TableRow 
+                  key={row.id || index} 
+                  hover
+                  sx={{ bgcolor: highlight ? '#9bfab0ff' : 'transparent' }}
+                >
+                  {columns.map((column) => (
+                    <TableCell 
+                      key={`${row.id || index}-${column.field}`}
+                      sx={{ 
+                        minWidth: column.minWidth || 'auto',
+                        flex: column.flex || 'none'
+                      }}
+                    >
+                      {column.renderCell 
+                        ? column.renderCell(row[column.field], row, index)
+                        : row[column.field]
+                      }
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

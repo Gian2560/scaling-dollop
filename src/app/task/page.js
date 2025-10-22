@@ -487,6 +487,7 @@ export default function TasksPage() {
               onChangeRowsPerPage={handleChangeRowsPerPage}
               page={page}
               rowsPerPage={rowsPerPage}
+              selectedEstado={selectedEstado}
             />
           )}
         </Box>

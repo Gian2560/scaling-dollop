@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { TextField, MenuItem, Button, Grid, FormControl, InputLabel, Select } from "@mui/material";
+import { TextField, MenuItem, Button, Grid, FormControl, InputLabel, Select, Box, Divider } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { es } from "date-fns/locale"; // 📌 Asegura el idioma correcto para español
 import { startOfDay, endOfDay, subDays } from "date-fns";
+import DownloadIcon from '@mui/icons-material/Download';
 
 const presets = [
   { label: "Todos", value: "all" }, 
@@ -21,6 +22,59 @@ export default function ClientesFilters({ filters, setFilters }) {
   const [preset, setPreset] = useState("all");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
   const [endDate, setEndDate] = useState(endOfDay(new Date()));
+  const [exportLoading, setExportLoading] = useState(false);
+
+  // Función para exportar clientes
+  const handleExportClientes = async () => {
+    setExportLoading(true);
+    try {
+      console.log('📥 Iniciando descarga de clientes...');
+      
+      const response = await fetch('/api/clientes/export');
+      
+      if (!response.ok) {
+        throw new Error('Error al exportar clientes');
+      }
+
+      // Obtener el blob del archivo
+      const blob = await response.blob();
+      
+      // Crear URL temporal para el archivo
+      const url = window.URL.createObjectURL(blob);
+      
+      // Crear elemento temporal para descargar
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Obtener nombre del archivo desde el header o usar uno por defecto
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let fileName = 'clientes_export.csv';
+      
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) {
+          fileName = match[1];
+        }
+      }
+      
+      link.download = fileName;
+      
+      // Trigger descarga
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpiar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ Descarga completada');
+    } catch (error) {
+      console.error('❌ Error al exportar clientes:', error);
+      alert('Error al exportar clientes. Por favor, intenta nuevamente.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const handlePresetChange = (event) => {
     const value = event.target.value;
@@ -218,32 +272,58 @@ export default function ClientesFilters({ filters, setFilters }) {
 
 
         <Grid item xs={12}>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setPreset("today");
-              setStartDate(startOfDay(new Date()));
-              setEndDate(endOfDay(new Date()));
-              setFilters({
-                search: "",
-                estado: "Todos",
-                accionComercial: "Todos",
-                interaccionBot: "Todos",
-                fechaInicio: "",
-                fechaFin: "",
-                fechaRegistro: "",
-              });
-            }}
-            sx={{
-              backgroundColor: "#007391",
-              "&:hover": { backgroundColor: "#005c6b" },
-              padding: "8px 20px",
-              borderRadius: "2px",
-              fontWeight: "bold",
-            }}
-          >
-            LIMPIAR
-          </Button>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            {/* Botón de Exportar */}
+            <Button
+              variant="outlined"
+              onClick={handleExportClientes}
+              disabled={exportLoading}
+              startIcon={<DownloadIcon />}
+              sx={{
+                borderColor: "#007391",
+                color: "#007391",
+                "&:hover": { 
+                  borderColor: "#005c6b",
+                  backgroundColor: "#f0f8ff"
+                },
+                padding: "8px 20px",
+                borderRadius: "2px",
+                fontWeight: "bold",
+                minWidth: "160px"
+              }}
+            >
+              {exportLoading ? 'Exportando...' : 'Exportar CSV'}
+            </Button>
+
+            {/* Botón de Limpiar */}
+            <Button
+              variant="contained"
+              onClick={() => {
+                setPreset("today");
+                setStartDate(startOfDay(new Date()));
+                setEndDate(endOfDay(new Date()));
+                setFilters({
+                  search: "",
+                  estado: "Todos",
+                  accionComercial: "Todos",
+                  interaccionBot: "Todos",
+                  fechaInicio: "",
+                  fechaFin: "",
+                  fechaRegistro: "",
+                });
+              }}
+              sx={{
+                backgroundColor: "#007391",
+                "&:hover": { backgroundColor: "#005c6b" },
+                padding: "8px 20px",
+                borderRadius: "2px",
+                fontWeight: "bold",
+                minWidth: "120px"
+              }}
+            >
+              LIMPIAR
+            </Button>
+          </Box>
         </Grid>
       </Grid>
     </LocalizationProvider>

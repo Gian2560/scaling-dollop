@@ -17,6 +17,7 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
+    const gestor = searchParams.get('gestor') || null;
     const estadosFrontend = estado
       ? estado.split(',').map(s => s.trim()).filter(Boolean)
       : [];
@@ -67,6 +68,10 @@ export async function GET(request) {
     // Filtrar por estado del cliente si se especifica
     if (estadosDB.length) {
       whereClause.accion = { in: estadosDB };
+    }
+    // Filtrar por gestor si se solicitó
+    if (gestor) {
+      whereClause.gestor = gestor;
     }
 
     // Y debe tener fecha_ultimo_estado del mes actual

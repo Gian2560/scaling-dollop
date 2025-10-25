@@ -21,6 +21,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { estadosConfig } from '@/constants/estadosConfig';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 export default function TasksPage() {
   // Estados principales
   const [selectedEstado, setSelectedEstado] = useState('');
@@ -37,7 +38,7 @@ export default function TasksPage() {
   const [currentView, setCurrentView] = useState('cards');
   const TOP_KEYS = ['Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
   const BOTTOM_KEYS = ['En seguimiento','Promesa de Pago'];
-
+  const [selectedGestor, setSelectedGestor] = useState('');
   // Estados para paginación y carga
   const [tasks, setTasks] = useState([]);
   const [page, setPage] = useState(0);
@@ -145,7 +146,8 @@ export default function TasksPage() {
         estado,
         page: currentPage.toString(),
         limit: limit.toString(),
-        ...(search && { search })
+        ...(search && { search }),
+        ...(selectedGestor && { gestor: selectedGestor })
       });
 
       console.log('🔍 Cargando tareas con parámetros:', { estado, currentPage, limit, search });
@@ -189,7 +191,7 @@ export default function TasksPage() {
     if (selectedEstado && currentView === 'detailed') {
       loadTasks(selectedEstado, page, rowsPerPage, searchTerm);
     }
-  }, [selectedEstado, currentView, page, rowsPerPage, searchTerm]);
+  }, [selectedEstado, currentView, page, rowsPerPage, searchTerm,selectedGestor]);
 
 
   // Función para seleccionar estado y cambiar a vista detallada
@@ -472,8 +474,26 @@ export default function TasksPage() {
             <Typography variant="h5" sx={{ fontWeight: 600, color: '#254e59' }}>
               / {estadosConfig[selectedEstado]?.titulo}
             </Typography>
+            {/* Selector de Gestor (filtro lateral simple) */}
+            <FormControl size="small" sx={{ minWidth: 240, ml: 93}}>
+              <InputLabel id="gestor-select-label">Filtrar por Gestor</InputLabel>
+              <Select
+                labelId="gestor-select-label"
+                value={selectedGestor}
+                label="Filtrar por Gestor"
+                onChange={(e) => { setSelectedGestor(e.target.value); setPage(0); }}
+              >
+                 <MenuItem value="">Todos</MenuItem>
+                  {gestores?.map((g) => (
+                    <MenuItem key={g.username} value={g.username}>
+                      {g.username}
+                    </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
-
+          {/* Selector de Gestor (filtro lateral simple) */}
+          
           {loading ? (
             <Box display="flex" justifyContent="center" py={8}>
               <CircularProgress size={60} sx={{ color: '#007391' }} />

@@ -283,3 +283,35 @@ model historico_observacion {
   accion_comercial         accion_comercial? @relation(fields: [accion_comercial_id], references: [accion_comercial_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_historico_accion_comercial")
   cliente                  cliente           @relation(fields: [cliente_id], references: [cliente_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_historico_cliente")
 }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cliente_backup {
+  cliente_id                   Int?
+  documento_identidad          String?   @db.VarChar(12)
+  tipo_documento               String?   @db.VarChar(20)
+  nombre                       String?   @db.VarChar(100)
+  apellido                     String?   @db.VarChar(100)
+  celular                      String?   @db.VarChar(20)
+  email                        String?   @db.VarChar(100)
+  fecha_creacion               DateTime? @db.Timestamp(6)
+  fecha_ultima_interaccion     DateTime? @db.Timestamp(6)
+  fecha_ultima_interaccion_bot DateTime? @db.Timestamp(6)
+  estado                       String?
+  motivo                       String?
+  categoria_no_interes         String?   @db.VarChar(20)
+  detalle_no_interes           String?   @db.VarChar(100)
+  bound                        Boolean?
+  observacion                  String?
+  gestor                       String?   @db.VarChar(100)
+  accion                       String?   @db.VarChar(50)
+  in_out                       Boolean?
+  score                        String?   @db.VarChar(20)
+  fecha_ultimo_estado          DateTime? @db.Timestamp(6)
+  Segmento                     String?
+  Codigo_Asociado              String?
+  Zona                         String?
+  Cluster                      String?
+  Producto                     String?
+
+  @@ignore
+}

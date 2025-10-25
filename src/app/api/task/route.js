@@ -23,6 +23,7 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '0');
     const limit = parseInt(searchParams.get('limit') || '25');
     const search = searchParams.get('search') || '';
+    const gestor = searchParams.get('gestor') || null;
 
     console.log('📋 Parámetros recibidos:', { estado, page, limit, search });
 
@@ -41,9 +42,12 @@ export async function GET(request) {
     });
     // ✅ PRIMERO: Verificar si hay clientes con ese estado
     if (esAccionComercial) {
+      const whereBase = {};
+      if (gestor) whereBase.gestor = gestor;
       console.log(`\n🔍 Filtrando por acción comercial con estado: "${estado}"`);
     // Buscar clientes cuya acción comercial más reciente sea de ese estado y más reciente que el estado del cliente
       const clientesCandidatos = await prisma.cliente.findMany({
+        where: whereBase,
         select: {
           cliente_id: true,
           nombre: true,
@@ -90,6 +94,11 @@ export async function GET(request) {
       });
       console.log(`📊 Total de clientes con estado "${estado}": ${clientesConEstado}`);
     }
+    let whereClause = {};
+    // Filtrar por gestor si se solicitó
+    if (gestor) {
+      whereClause.gestor = gestor;
+    }
 
     // ✅ SEGUNDO: Verificar si hay clientes con fecha_ultimo_estado del mes actual
     const clientesConFechaMes = await prisma.cliente.count({
@@ -103,7 +112,7 @@ export async function GET(request) {
     console.log(`📊 Total de clientes con fecha_ultimo_estado del mes actual: ${clientesConFechaMes}`);
 
     // ✅ CONSTRUIR FILTRO CORRECTO
-    let whereClause = {};
+    
 
     // Filtrar por estado del cliente si se especifica
     if (estado) {

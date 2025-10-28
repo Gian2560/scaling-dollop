@@ -499,7 +499,7 @@ export async function POST(request) {
 
         // Igual que GET:
         // Pendiente: no hay fecha_ultimo_estado o la acción es más nueva
-        if (!fEstado || fAcc > fEstado) pendientes++;
+        if (fAcc > fEstado && fAcc && fEstado) pendientes++;
         else completados++;
       }
 

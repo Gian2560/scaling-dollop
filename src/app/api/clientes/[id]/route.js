@@ -44,7 +44,6 @@ export async function PUT(req, context) {
     const updatedCliente = await prisma.cliente.update({
       where: { cliente_id: parseInt(id) },
       data: {
-        estado,
         accion,
         gestor,
         observacion: observaciones,

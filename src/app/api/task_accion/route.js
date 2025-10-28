@@ -455,15 +455,19 @@ export async function POST(request) {
     const { estados = Object.keys(estadosMapping), search = '' } = body;
 
     const metricas = {};
-
+    const ahora = new Date();
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
     for (const estadoFrontend of estados) {
       const estadosDB = estadosMapping[estadoFrontend] || [estadoFrontend];
 
      // 1) Filtrar por el atributo del CLIENTE: "accion"
-      const whereAND = [{ accion: { in: estadosDB } }];
+      const whereAND = [{ accion: { in: estadosDB } },
+        { fecha_ultimo_estado: { gte: inicioMes, lte: finMes } }
+      ];
 
       if (search) {
-        andClauses.push({
+        whereAND.push({
           OR: [
             { nombre: { contains: search, mode: 'insensitive' } },
             { apellido: { contains: search, mode: 'insensitive' } },
@@ -491,15 +495,36 @@ export async function POST(request) {
       let completados = 0;
 
       for (const c of candidatos) {
-        const ultima = c.accion_comercial[0];
-        if (!ultima) continue; // por seguridad
+        // const ultima = c.accion_comercial[0];
+        // //if (!ultima) continue; // por seguridad
 
-        const fAcc = new Date(ultima.fecha_accion);
-        const fEstado = c.fecha_ultimo_estado ? new Date(c.fecha_ultimo_estado) : null;
+        // const fAcc = new Date(ultima.fecha_accion);
+        // const fEstado = c.fecha_ultimo_estado ? new Date(c.fecha_ultimo_estado) : null;
+        // // Si no hay última acción -> considerarlo PENDIENTE
+        // if (!ultima) {
+        //   pendientes++;
+        //   continue;
+        // }
+        // // Igual que GET:
+        // // Pendiente: no hay fecha_ultimo_estado o la acción es más nueva
+        // if (fAcc > fEstado && fAcc && fEstado) pendientes++;
+        // else completados++;
+        // si no tiene fecha_ultimo_estado, se excluye (igual que GET)
+        if (!c.fecha_ultimo_estado) continue;
 
-        // Igual que GET:
-        // Pendiente: no hay fecha_ultimo_estado o la acción es más nueva
-        if (fAcc > fEstado && fAcc && fEstado) pendientes++;
+        const fechaUltimoEstado = new Date(c.fecha_ultimo_estado);
+        const ultima = c.accion_comercial?.[0];
+
+        // Si no hay última acción -> considerarlo PENDIENTE
+        if (!ultima || !ultima.fecha_accion) {
+          pendientes++;
+          continue;
+        }
+
+        const fechaUltimaAccion = new Date(ultima.fecha_accion);
+
+        // Consistente con GET: pendiente cuando fecha_ultimo_estado es más reciente que la última acción
+        if (fechaUltimoEstado < fechaUltimaAccion) pendientes++;
         else completados++;
       }
 

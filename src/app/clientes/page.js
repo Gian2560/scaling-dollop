@@ -51,24 +51,22 @@ import ConversationModal from '@/app/components/ConversationModal';
 
 // Estados disponibles con sus colores
 const ESTADOS = {
-  'Comunicacion inmediata': { color: '#dc2626', bgcolor: '#fef2f2' }, // Rojo urgente
-  'Gestion de contrato': { color: '#2563eb', bgcolor: '#eff6ff' }, // Azul
-  'Negociacion de pago': { color: '#ea580c', bgcolor: '#fff7ed' }, // Naranja
-  'Duda agresiva no resuelta': { color: '#dc2626', bgcolor: '#fef2f2' }, // Rojo fuerte
-  'Duda no resuelta': { color: '#d97706', bgcolor: '#fffbeb' }, // Amarillo oscuro
-  'Enojado': { color: '#991b1b', bgcolor: '#fef2f2' }, // Rojo muy oscuro
-  'No interesado': { color: '#6b7280', bgcolor: '#f9fafb' }, // Gris
-  'Promesa de pago': { color: '#059669', bgcolor: '#f0fdf4' }, // Verde
-  'Duda resuelta': { color: '#16a34a', bgcolor: '#f0fdf4' }, // Verde claro
+  'Solicita devolucion de dinero': { color: '#b45309', bgcolor: '#fffbeb' },   // amber-600 / amber-50 (atención)
+  'Interesado en reactivar':       { color: '#2563eb', bgcolor: '#eef2ff' },   // blue-600 / indigo-50 (interés/acción)
+  'Reclamo activo':                { color: '#e11d48', bgcolor: '#fff1f2' },   // rose-600 / rose-50 (alerta)
+  'Indeciso':                      { color: '#ca8a04', bgcolor: '#fefce8' },   // yellow-600 / yellow-50 (pendiente)
+  'No interesado':                 { color: '#6b7280', bgcolor: '#f9fafb' },   // gray-500 / gray-50 (neutro)
+  'Fecha de Pago':                 { color: '#059669', bgcolor: '#ecfdf5' }    // emerald-600 / emerald-50 (éxito)
 };
 
 const ESTADOS_ASESOR = {
-  'Seguimiento - Duda no resuelta': { color: '#d97706', bgcolor: '#fffbeb' },
-  'No interesado': { color: '#6b7280', bgcolor: '#f9fafb' },
-  'Promesa de Pago': { color: '#059669', bgcolor: '#f0fdf4' },
-  'Seguimiento - Duda resuelta': { color: '#16a34a', bgcolor: '#f0fdf4' },
+  'Sin accion comercial': { color: '#b45309', bgcolor: '#fffbeb' }, // amber-600 / amber-50 (pendiente)
+  'No interesado':        { color: '#6b7280', bgcolor: '#f9fafb' }, // gray-500 / gray-50 (neutro)
+  'Promesa de Pago':      { color: '#0d9488', bgcolor: '#f0fdfa' }, // teal-600 / teal-50 (compromiso)
+  'Volver a contactar':   { color: '#4f46e5', bgcolor: '#eef2ff' }, // indigo-600 / indigo-50 (acción próxima)
+  'En seguimiento':       { color: '#0284c7', bgcolor: '#e0f2fe' }, // sky-600 / sky-100 (en progreso)
+  'Reactivado':           { color: '#15803d', bgcolor: '#ecfdf5' }  // green-700 / emerald-50 (éxito)
 };
-
 // Header profesional más compacto
 function ProfessionalHeader({ totalClientes, activeFilters }) {
   return (

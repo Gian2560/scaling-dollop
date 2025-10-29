@@ -141,12 +141,12 @@ export default function ClientesFilters({ filters, setFilters }) {
             }}
           >
             <MenuItem value="Todos">Todos</MenuItem>
-            <MenuItem value="Interesado">Interesado</MenuItem>
-            <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
+            <MenuItem value="Reclamo activo">Reclamo activo</MenuItem>
             <MenuItem value="No interesado">No interesado</MenuItem>
-            <MenuItem value="Finalizado">Finalizado</MenuItem>
-            <MenuItem value="En seguimiento">En seguimiento</MenuItem>
-            <MenuItem value="No contactado">No contactado</MenuItem>
+            <MenuItem value="Solicita devolucion de dinero">Solicita devolucion de dinero</MenuItem>
+            <MenuItem value="Indeciso">Indeciso</MenuItem>
+            <MenuItem value="Interesado en reactivar">Interesado en reactivar</MenuItem>
+            <MenuItem value="Fecha de Pago">Fecha de Pago</MenuItem>
           </TextField>
         </Grid>
 
@@ -186,7 +186,8 @@ export default function ClientesFilters({ filters, setFilters }) {
             <MenuItem value="No interesado">No interesado</MenuItem>
             <MenuItem value="Promesa de Pago">Promesa de Pago</MenuItem>
             <MenuItem value="Volver a contactar">Volver a contactar</MenuItem>
-            <MenuItem value="Pago">Pago</MenuItem>
+            <MenuItem value="En seguimiento">En seguimiento</MenuItem>
+            <MenuItem value="Reactivado">Reactivado</MenuItem>
             <MenuItem value="Sin accion comercial">Sin acción comercial</MenuItem> 
           </TextField>
         </Grid>

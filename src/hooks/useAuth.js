@@ -31,25 +31,25 @@ import { useEffect } from "react";
 export function useAuth() {
   const { data: session, status } = useSession();
 
-  useEffect(() => {
-    // Opción A: usar session.expires de NextAuth
-    const expIso = session?.expires;
-    const expMs = expIso ? new Date(expIso).getTime() : null;
+  // useEffect(() => {
+  //   // Opción A: usar session.expires de NextAuth
+  //   const expIso = session?.expires;
+  //   const expMs = expIso ? new Date(expIso).getTime() : null;
 
-    // O, si prefieres, usa el timestamp que mandamos:
-    // const expMs = session?.expiresAt ? Number(session.expiresAt) : null;
+  //   // O, si prefieres, usa el timestamp que mandamos:
+  //   // const expMs = session?.expiresAt ? Number(session.expiresAt) : null;
 
-    if (!expMs) return;
+  //   if (!expMs) return;
 
-    const id = setInterval(() => {
-      if (Date.now() >= expMs) {
-        console.log("🔄 Sesión expirada. Cerrando sesión.");
-        signOut();
-      }
-    }, 30000); // revisa cada 30s
+  //   const id = setInterval(() => {
+  //     if (Date.now() >= expMs) {
+  //       console.log("🔄 Sesión expirada. Cerrando sesión.");
+  //       signOut();
+  //     }
+  //   }, 30000); // revisa cada 30s
 
-    return () => clearInterval(id);
-  }, [session?.expires, session?.expiresAt]);
+  //   return () => clearInterval(id);
+  // }, [session?.expires, session?.expiresAt]);
 
   return {
     isAuthenticated: status === "authenticated",

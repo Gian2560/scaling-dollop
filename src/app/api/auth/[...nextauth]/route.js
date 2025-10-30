@@ -118,7 +118,7 @@ export const authOptions = {
           name: usuario.username,
           email: usuario.email || undefined,
           role: (usuario.rol && usuario.rol.nombre_rol) || "user",
-          tokenExpires: Date.now() + 60 * 60 * 1000, // 1h
+          //tokenExpires: Date.now() + 60 * 60 * 1000, // 1h
         };
       },
     }),
@@ -128,11 +128,11 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60, // 1h (segundos)
+    maxAge: 60 * 60 * 24 * 365 * 10,
   },
 
   jwt: {
-    maxAge: 60 * 60, // 1h
+    maxAge: 60 * 60 * 24 * 365 * 10, // 1h
   },
 
   callbacks: {
@@ -140,31 +140,31 @@ export const authOptions = {
       // Primer login: mezcla datos del usuario
       if (user) {
         token.role = user.role || "user";
-        token.expiresAt = typeof user.tokenExpires !== "undefined"
-          ? Number(user.tokenExpires)
-          : Date.now() + 60 * 60 * 1000; // fallback 1h
-        delete token.error;
+        // token.expiresAt = typeof user.tokenExpires !== "undefined"
+        //   ? Number(user.tokenExpires)
+        //   : Date.now() + 60 * 60 * 1000; // fallback 1h
+        // delete token.error;
       }
 
       // ⚠️ Nunca devuelvas null aquí; marca expiración con bandera
-      if (token.expiresAt && Date.now() > Number(token.expiresAt)) {
+      /* if (token.expiresAt && Date.now() > Number(token.expiresAt)) {
         token.error = "TokenExpired";
-      }
+      } */
 
       return token; // ✅ siempre un objeto
     },
 
     async session({ session, token }) {
       // Si el token está marcado como expirado, invalida la sesión
-      if (token && token.error === "TokenExpired") {
-        return null; // aquí sí es válido devolver null
-      }
+      // if (token && token.error === "TokenExpired") {
+      //   return null; // aquí sí es válido devolver null
+      // }
 
       if (session?.user) {
         session.user.role = (token && token.role) || "user";
       }
       // opcional: exponer el timestamp para tu hook
-      session.expiresAt = token ? token.expiresAt : null;
+      //session.expiresAt = token ? token.expiresAt : null;
 
       return session;
     },

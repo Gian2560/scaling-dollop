@@ -56,7 +56,7 @@ export async function POST(req) {
     const sql = `
       WITH base AS (
         SELECT bd_com.*
-        FROM \`${project}.${dataset}.BD_ENVIOS_SAYA_20251003\` bd_com
+        FROM \`${project}.${dataset}.BD_ENVIOS_SAYA_20251103\` bd_com
         LEFT JOIN \`${project}.${dataset}.BD_ReingresosJunto\` bd_dia
           ON CAST(bd_com.ndoc AS STRING) = CAST(bd_dia.Documento AS STRING)
         WHERE bd_dia.Documento IS NULL

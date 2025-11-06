@@ -14,23 +14,26 @@ function convertirFecha(fecha) {
       return fecha;
     }
     
-    // Si es un objeto Date de BigQuery
+    // Si es un objeto BigQueryDatetime con propiedad value
     if (fecha.value && typeof fecha.value === 'string') {
-      return fecha.value;
+      // Extraer solo la fecha (sin la hora) en formato legible
+      const fechaISO = fecha.value;
+      const soloFecha = fechaISO.split('T')[0]; // Obtener solo YYYY-MM-DD
+      return soloFecha;
     }
     
     // Si es un objeto con propiedades de fecha
     if (typeof fecha === 'object') {
       const dateObj = new Date(fecha);
       if (!isNaN(dateObj.getTime())) {
-        return dateObj.toISOString().split('T')[0] + ' ' + dateObj.toTimeString().split(' ')[0];
+        return dateObj.toISOString().split('T')[0]; // Solo la fecha
       }
     }
     
     // Intento directo de conversión
     const dateObj = new Date(fecha);
     if (!isNaN(dateObj.getTime())) {
-      return dateObj.toISOString().split('T')[0] + ' ' + dateObj.toTimeString().split(' ')[0];
+      return dateObj.toISOString().split('T')[0]; // Solo la fecha
     }
     
     return fecha.toString();
@@ -53,7 +56,7 @@ export async function GET(request) {
       estados
     });
 
-    // PASO 1: Buscar clientes con esos estados en PostgreSQL
+    // PASO 1: Buscar clientes con esos estados en PostgreSQL O clientes sin estado pero con acciones comerciales
     let documentosClientes = [];
     
     if (estados.length > 0) {
@@ -82,6 +85,42 @@ export async function GET(request) {
       console.log(`📊 Encontrados ${documentosClientes.length} clientes con estados requeridos`);
     }
 
+    // PASO 1.5: Buscar clientes SIN estado pero CON acciones comerciales
+    console.log('🔍 Buscando clientes SIN estado pero CON acciones comerciales');
+    
+    const clientesSinEstadoConAcciones = await prisma.cliente.findMany({
+      where: {
+        OR: [
+          { estado: null },
+          { estado: "" },
+          { estado: "sin estado" }
+        ],
+        documento_identidad: {
+          not: null
+        },
+        accion_comercial: {
+          some: {} // Que tenga al menos una acción comercial
+        }
+      },
+      select: {
+        documento_identidad: true,
+        nombre: true,
+        apellido: true
+      }
+    });
+
+    // Agregar estos documentos a la lista (sin duplicados)
+    const documentosSinEstado = clientesSinEstadoConAcciones.map(cliente => 
+      cliente.documento_identidad.replace(/,/g, '').trim()
+    );
+    
+    // Combinar ambas listas sin duplicados
+    const todosLosDocumentos = [...new Set([...documentosClientes, ...documentosSinEstado])];
+    documentosClientes = todosLosDocumentos;
+    
+    console.log(`📊 Total: ${clientesSinEstadoConAcciones.length} clientes sin estado pero con acciones comerciales`);
+    console.log(`📊 Total combinado: ${documentosClientes.length} documentos únicos`);
+
     if (documentosClientes.length === 0) {
       return NextResponse.json({
         success: true,
@@ -91,7 +130,7 @@ export async function GET(request) {
           documentosUnicos: 0,
           codigosUnicos: 0
         },
-        message: 'No se encontraron clientes con los estados especificados'
+        message: 'No se encontraron clientes con los criterios especificados'
       });
     }
 
@@ -134,8 +173,10 @@ export async function GET(request) {
 
     console.log(`✅ BigQuery retornó ${rows.length} registros`);
 
-    // Crear mapa de nombres desde PostgreSQL
+    // Crear mapa de nombres desde PostgreSQL (estados + sin estado con acciones)
     let nombresMap = new Map();
+    
+    // Agregar clientes con estados específicos
     if (estados.length > 0) {
       const clientesConEstados = await prisma.cliente.findMany({
         where: {
@@ -159,6 +200,12 @@ export async function GET(request) {
         nombresMap.set(documentoLimpio, `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim());
       });
     }
+    
+    // Reutilizar la consulta ya realizada para clientes sin estado con acciones comerciales
+    clientesSinEstadoConAcciones.forEach(cliente => {
+      const documentoLimpio = cliente.documento_identidad.replace(/,/g, '').trim();
+      nombresMap.set(documentoLimpio, `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim());
+    });
 
     // Procesar datos combinando BigQuery con nombres de PostgreSQL
     const processedData = rows.map((row, index) => {
@@ -167,7 +214,6 @@ export async function GET(request) {
       
       // Convertir fecha a string legible
       const fechaConvertida = convertirFecha(row.fecha_operacion);
-      console.log('Fecha original:', row.fecha_operacion, 'Fecha convertida:', fechaConvertida);
       
       return {
         id: `${documentoLimpio}_${index}`,
@@ -189,7 +235,7 @@ export async function GET(request) {
       success: true,
       data: processedData,
       stats,
-      message: `Se encontraron ${processedData.length} registros de ${documentosClientes.length} clientes con estados bot`
+      message: `Se encontraron ${processedData.length} registros de ${documentosClientes.length} clientes (con estados bot o sin estado pero con acciones comerciales)`
     });
 
   } catch (error) {

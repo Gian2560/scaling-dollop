@@ -86,13 +86,35 @@ export const botInteractionsColumns = [
     width: 180,
     align: 'center',
     headerAlign: 'center',
-    valueFormatter: (params) => {
-      if (!params.value) return 'Sin fecha';
-      return new Date(params.value).toLocaleDateString('es-CL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
+    renderCell: (params) => {
+      const fecha = params.row?.fecha_operacion;
+      
+      if (!fecha) return 'Sin fecha';
+      
+      try {
+        // Si ya está en formato YYYY-MM-DD, parsearlo directamente
+        const fechaStr = String(fecha);
+        
+        if (fechaStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = fechaStr.split('-');
+          return `${day}/${month}/${year}`;
+        }
+        
+        // Fallback: intentar parsear como fecha normal
+        const fechaObj = new Date(fechaStr);
+        if (!isNaN(fechaObj.getTime())) {
+          return fechaObj.toLocaleDateString('es-CL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        }
+        
+        return fechaStr; // Mostrar el valor original si no se puede formatear
+      } catch (error) {
+        console.error('Error formateando fecha:', error, fecha);
+        return String(fecha || 'Error fecha');
+      }
     }
   }
 ];

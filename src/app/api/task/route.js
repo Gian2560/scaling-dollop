@@ -460,7 +460,6 @@ export async function POST(request) {
           fecha_ultimo_estado: true,
           accion_comercial: {
               where: {
-                estado: { in: estadosDB },
                 fecha_accion: { gte: inicioMes, lte: finMes } // ✅ última acción de este mes
               },
               select: {
@@ -486,16 +485,19 @@ export async function POST(request) {
         const fechaUltimoEstado = new Date(cliente.fecha_ultimo_estado);
         
         // Si no tiene acciones comerciales -> PENDIENTE
-        if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
-          pendientes++;
-          console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones -> PENDIENTE`);
-          return;
-        }
+        // if (!cliente.accion_comercial || cliente.accion_comercial.length === 0) {
+        //   pendientes++;
+        //   console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Sin acciones -> PENDIENTE`);
+        //   return;
+        // }
 
-        const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
-        
+        //const fechaUltimaAccion = new Date(cliente.accion_comercial[0].fecha_accion);
+        const fechaUltimaAccion = cliente.accion_comercial?.[0]?.fecha_accion
+          ? new Date(cliente.accion_comercial[0].fecha_accion)
+          : null;
         // Comparar fechas para clasificar
-        if (fechaUltimoEstado > fechaUltimaAccion) {
+        //if (fechaUltimoEstado > fechaUltimaAccion || !cliente.accion_comercial || cliente.accion_comercial.length === 0) {
+        if (!fechaUltimaAccion || fechaUltimoEstado > fechaUltimaAccion) {
           // Estado más reciente que acción -> PENDIENTE
           pendientes++;
           console.log(`   ✅ Cliente ${cliente.cliente_id} (${cliente.nombre}): Estado más reciente -> PENDIENTE`);

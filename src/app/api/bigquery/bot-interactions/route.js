@@ -158,7 +158,6 @@ export async function GET(request) {
       FROM \`peak-emitter-350713.FR_Reingresos_output.BD_ReingresosAcumulados\`
       WHERE ${where_sql}
       ORDER BY Fecha_de_Operacion DESC
-      LIMIT 1000
     `;
 
     console.log('🚀 Ejecutando query en BigQuery para documentos encontrados');

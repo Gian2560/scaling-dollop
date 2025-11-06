@@ -26,6 +26,7 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BadgeIcon from "@mui/icons-material/Badge";
 import ContactPageIcon from "@mui/icons-material/ContactPage";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect } from "react";
@@ -269,6 +270,21 @@ export default function Layout({ children }) {
           </ListItemIcon>
           <ListItemText primary="Gestion" />
         </ListItem> }
+
+        <ListItem
+          button="true"
+          onClick={() => router.push("/bot-interactions")}
+          sx={{
+            "&:hover": { bgcolor: "#2D3748" },
+            px: 3,
+            py: 1.5,
+          }}
+        >
+          <ListItemIcon sx={{ color: "#fff" }}>
+            <SmartToyIcon />
+          </ListItemIcon>
+          <ListItemText primary="Interacciones Bot" />
+        </ListItem>
 
       </List>
       <Divider sx={{ bgcolor: "#2D3748" }} />

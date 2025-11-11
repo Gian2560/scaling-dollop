@@ -4,6 +4,7 @@ import { useClientes } from '@/hooks/useClientes';
 import ActionComercialModal from '@/app/components/ActionComercialModal';
 import ConversationModal from '@/app/components/ConversationModal';
 import HistoricoModal from '@/app/components/HistoricoModal';
+import BitacoraModal from '@/app/components/BitacoraModal';
 import { fetchConversacion } from '../../../services/clientesService';
 import ProfessionalHeader from '../components/taskComponets/ProfessionalHeader';
 import EstadoCard from '../components/taskComponets/EstadoCard';
@@ -29,6 +30,7 @@ export default function TasksPage() {
   const [openModal, setOpenModal] = useState(false);
   const [openConversationModal, setOpenConversationModal] = useState(false);
   const [openHistoricoModal, setOpenHistoricoModal] = useState(false);
+  const [openBitacoraModal, setOpenBitacoraModal] = useState(false);
   const [conversationData, setConversationData] = useState(null);
   const [conversationLoading, setConversationLoading] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(0);
@@ -277,6 +279,27 @@ export default function TasksPage() {
     setSelectedClienteHistorico(null);
   };
 
+  // Función para ver bitácora
+  const handleVerBitacora = async (clienteId) => {
+    // Buscar el cliente en los datos actuales para obtener su información
+    const cliente = tasks.find(t => t.id === clienteId);
+    console.log('🔍 Cliente encontrado para bitácora:', cliente);
+    console.log('📄 Documento del cliente:', cliente?.documento);
+    
+    setSelectedClienteHistorico({
+      id: clienteId,
+      nombre: cliente?.cliente || 'Cliente desconocido',
+      documento: cliente?.documento || ''
+    });
+    setOpenBitacoraModal(true);
+  };
+
+  // Función para cerrar modal de bitácora
+  const handleCloseBitacora = () => {
+    setOpenBitacoraModal(false);
+    setSelectedClienteHistorico(null);
+  };
+
   // Función personalizada para guardar cliente y marcar tarea como llamada
   const handleSaveClienteAndMarkTask = async (clienteData) => {
     try {
@@ -500,7 +523,7 @@ export default function TasksPage() {
             </Box>
           ) : (
             <TasksTable
-              columns={taskColumns(handleAccionComercial, handleVerConversacion, selectedEstado, handleVerHistorico)}
+              columns={taskColumns(handleAccionComercial, handleVerConversacion, selectedEstado, handleVerHistorico, handleVerBitacora)}
               data={tasks}
               pagination={pagination}
               onChangePage={handleChangePage}
@@ -535,6 +558,13 @@ export default function TasksPage() {
         open={openHistoricoModal}
         onClose={handleCloseHistorico}
         clienteId={selectedClienteHistorico?.id}
+        clienteNombre={selectedClienteHistorico?.nombre}
+      />
+
+      <BitacoraModal
+        open={openBitacoraModal}
+        onClose={handleCloseBitacora}
+        clienteDocumento={selectedClienteHistorico?.documento}
         clienteNombre={selectedClienteHistorico?.nombre}
       />
     </Container>

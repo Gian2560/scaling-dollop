@@ -69,20 +69,51 @@ export async function GET(request) {
           },
           documento_identidad: {
             not: null
+          },
+          // Validar que el primer estado del histórico esté en el rango de fechas
+          historico_estado: {
+            some: {
+              fecha_estado: {
+                gte: new Date(fechaInicio || '2024-01-01'),
+                lte: new Date(fechaFin || new Date().toISOString().split('T')[0])
+              }
+            }
           }
         },
         select: {
           documento_identidad: true,
           nombre: true,
-          apellido: true
+          apellido: true,
+          historico_estado: {
+            orderBy: {
+              fecha_estado: 'asc'
+            },
+            take: 1,
+            select: {
+              fecha_estado: true,
+              estado: true
+            }
+          }
         }
       });
 
+      // Filtrar clientes cuyo PRIMER estado del histórico esté en el rango
+      const clientesFiltrados = clientesConEstados.filter(cliente => {
+        if (cliente.historico_estado.length === 0) return false;
+        
+        const primerEstado = cliente.historico_estado[0];
+        const fechaPrimerEstado = new Date(primerEstado.fecha_estado);
+        const fechaInicioDate = new Date(fechaInicio || '2024-01-01');
+        const fechaFinDate = new Date(fechaFin || new Date().toISOString().split('T')[0]);
+        
+        return fechaPrimerEstado >= fechaInicioDate && fechaPrimerEstado <= fechaFinDate;
+      });
+
       // Limpiar documentos de PostgreSQL (quitar comas y espacios)
-      documentosClientes = clientesConEstados.map(cliente => 
+      documentosClientes = clientesFiltrados.map(cliente => 
         cliente.documento_identidad.replace(/,/g, '').trim()
       );
-      console.log(`📊 Encontrados ${documentosClientes.length} clientes con estados requeridos`);
+      console.log(`📊 Encontrados ${clientesFiltrados.length} clientes con estados requeridos y primer estado en rango`);
     }
 
     // PASO 1.5: Buscar clientes SIN estado pero CON acciones comerciales
@@ -184,16 +215,47 @@ export async function GET(request) {
           },
           documento_identidad: {
             not: null
+          },
+          // Validar que el primer estado del histórico esté en el rango de fechas
+          historico_estado: {
+            some: {
+              fecha_estado: {
+                gte: new Date(fechaInicio || '2024-01-01'),
+                lte: new Date(fechaFin || new Date().toISOString().split('T')[0])
+              }
+            }
           }
         },
         select: {
           documento_identidad: true,
           nombre: true,
-          apellido: true
+          apellido: true,
+          historico_estado: {
+            orderBy: {
+              fecha_estado: 'asc'
+            },
+            take: 1,
+            select: {
+              fecha_estado: true,
+              estado: true
+            }
+          }
         }
       });
+
+      // Filtrar clientes cuyo PRIMER estado del histórico esté en el rango
+      const clientesFiltrados = clientesConEstados.filter(cliente => {
+        if (cliente.historico_estado.length === 0) return false;
+        
+        const primerEstado = cliente.historico_estado[0];
+        const fechaPrimerEstado = new Date(primerEstado.fecha_estado);
+        const fechaInicioDate = new Date(fechaInicio || '2024-01-01');
+        const fechaFinDate = new Date(fechaFin || new Date().toISOString().split('T')[0]);
+        
+        return fechaPrimerEstado >= fechaInicioDate && fechaPrimerEstado <= fechaFinDate;
+      });
       
-      clientesConEstados.forEach(cliente => {
+      clientesFiltrados.forEach(cliente => {
         // Limpiar documento también para el mapa de nombres
         const documentoLimpio = cliente.documento_identidad.replace(/,/g, '').trim();
         nombresMap.set(documentoLimpio, `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim());

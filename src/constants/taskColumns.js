@@ -12,6 +12,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChatIcon from '@mui/icons-material/Chat';
 import PaymentIcon from '@mui/icons-material/Payment';
 import HistoryIcon from '@mui/icons-material/History';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import { estadosConfig } from './estadosConfig';
 // Estados que deben mostrar "gestionado mes actual" si tienen acción en el mes
 const HIGHLIGHT_STATES = ['Interesado en reactivar','Fecha de Pago','Indeciso / Informacion'];
@@ -324,7 +325,7 @@ const estadoSpecificColumns = {
 };
 
 // Columnas de acciones (siempre al final)
-const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico, selectedEstado) => [
+const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico, onVerBitacora, selectedEstado) => [
   {
     field: 'gestionadoMes',
     headerName: '¿Gestionado mes actual?',
@@ -355,7 +356,7 @@ const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico, sel
   {
     field: 'acciones',
     headerName: 'Acciones',
-    minWidth: 160,
+    minWidth: 200,
     flex: 0,
     sortable: false,
     renderCell: (value, row) => (
@@ -376,6 +377,15 @@ const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico, sel
             sx={{ color: '#6b46c1' }}
           >
             <HistoryIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Ver bitácora de llamadas">
+          <IconButton
+            size="small"
+            onClick={() => onVerBitacora(row.id)}
+            sx={{ color: '#ff6b35' }}
+          >
+            <RecordVoiceOverIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title={row.llamado ? "Completado" : "Realizar llamada"}>
@@ -401,7 +411,7 @@ const actionColumns = (onAccionComercial, onVerConversacion, onVerHistorico, sel
 ];
 
 // Función principal que devuelve las columnas según el estado
-export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado = null, onVerHistorico) => {
+export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado = null, onVerHistorico, onVerBitacora) => {
   // Columnas base
   let columns = [...baseColumns(onAccionComercial, onVerConversacion, selectedEstado)];
   
@@ -412,7 +422,7 @@ export const taskColumns = (onAccionComercial, onVerConversacion, selectedEstado
   }
   
   // Agregar columnas de acciones al final
-  columns = [...columns, ...actionColumns(onAccionComercial, onVerConversacion, onVerHistorico, selectedEstado)];
+  columns = [...columns, ...actionColumns(onAccionComercial, onVerConversacion, onVerHistorico, onVerBitacora, selectedEstado)];
   
   return columns;
 };
